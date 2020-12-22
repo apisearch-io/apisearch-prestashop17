@@ -331,18 +331,6 @@ class ApisearchClient {
 
     if ('get' !== $method) {
       $data = json_encode($body, JSON_PRESERVE_ZERO_FRACTION);
-//      $context = stream_context_create([
-//          'http' => [
-//              'method' => $method,
-//              'ignore_errors' => true,
-//              'header' => "Content-type: application/json\r\n" .
-//              "Accept: application/json\r\n" .
-//              "Connection: close\r\n" .
-//              'Content-length: ' . strlen($data) . "\r\n",
-//              'content' => $data,
-//          ],
-//      ]);
-//      $data = file_get_contents($url, false, $context);
       
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $url);
@@ -352,15 +340,16 @@ class ApisearchClient {
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
       $data = curl_exec($ch);
       $response = curl_exec($ch);
+      $err = curl_error($ch);
       curl_close($ch);
     } else {
-//      $data = file_get_contents($url);
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $url);
       curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
       $data = curl_exec($ch);
       $response = curl_exec($ch);
+      $err = curl_error($ch);
       curl_close($ch);
     }
     

@@ -39,7 +39,7 @@
             var groups = {/literal}{$shopAsso.group|array_values|json_encode}{literal};
             var shops = {/literal}{$shopAsso.shop|array_values|json_encode}{literal};
             $('#shop-tree input[type="checkbox"]').each(function () {
-              if (($(this).attr('name').indexOf("checkBoxShopGroupAsso_module") != -1 && groups.includes($(this).val())) || ($(this).attr('name').indexOf("checkBoxShopAsso_module") != -1 && shops.includes($(this).val()))) {
+              if (($(this).attr('name').indexOf("checkBoxShopGroupAsso_module") != -1 && groups != null && groups.includes($(this).val())) || ($(this).attr('name').indexOf("checkBoxShopAsso_module") != -1 && shops != null && shops.includes($(this).val()))) {
                 $(this).prop('checked', true);
               }
             });

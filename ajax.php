@@ -73,7 +73,7 @@ function syncProducts() {
           $offset = 0;
           $products_old_total = array();
           while (true) {
-            $products_old = Product::getProducts($lang['id_lang'], 0, 0, 'id_product', 'asc', false, true);
+            $products_old = Product::getProducts($lang['id_lang'], $offset, $count, 'id_product', 'asc', false, true);
             if (!empty($products_old)) {
               $products_old_total = array_merge($products_old_total, $products_old);
               $count = count($products_old);
@@ -88,7 +88,7 @@ function syncProducts() {
           $offset = 0;
           $products_new_total = array();
           while (true) {
-            $products_new = Product::getProducts($lang['id_lang'], 0, 0, 'id_product', 'asc', false, true);
+            $products_new = Product::getProducts($lang['id_lang'], $offset, $count, 'id_product', 'asc', false, true);
             if (!empty($products_new)) {
               $products_new_total = array_merge($products_new_total, $products_new);
               $count = count($products_new);

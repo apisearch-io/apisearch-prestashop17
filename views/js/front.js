@@ -35,6 +35,7 @@ const as_snippet = '//admin.apisearch.io/' + index_id + '.js?' +
         '&results=' + results +
         '&empty_results=' + empty_results +
         '&clear_filters=' + clear_filters +
+//        '&user_id=' + user_id +
         '&add_to_cart=' + add_to_cart;
 (function (d, t) {
   var f = d.createElement(t), s = d.getElementsByTagName(t)[0];

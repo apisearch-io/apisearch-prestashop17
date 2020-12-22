@@ -35,7 +35,7 @@ class Apisearch extends Module {
   public function __construct() {
     $this->name = 'apisearch';
     $this->tab = 'search_filter';
-    $this->version = '1.1.0';
+    $this->version = '1.1.1';
     $this->author = 'eComm360';
     $this->need_instance = 0;
 
@@ -72,7 +72,7 @@ class Apisearch extends Module {
       $this->postProcess();
     }
 
-    $this->context->smarty->assign('module_dir', $this->_path);
+    $this->context->smarty->assign('module_dir', Context::getContext()->link->getBaseLink() . ltrim($this->_path, '/'));
 
     $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
 
@@ -200,6 +200,7 @@ class Apisearch extends Module {
           'empty_results' => urlencode($this->l('Empty results for:')),
           'clear_filters' => urlencode($this->l('Clear filters')),
           'add_to_cart' => urlencode($this->l('Add to cart')),
+//          'user_id' => $this->context->cookie->__get('id_guest')
       ));
       $this->context->controller->addJS($this->_path . 'views/js/front.js');
     }
