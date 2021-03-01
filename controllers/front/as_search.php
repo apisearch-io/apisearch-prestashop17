@@ -1,5 +1,7 @@
+<?php
+
 /**
- * 2007-2020 PrestaShop
+ * 2007-2021 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -18,29 +20,18 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  *  @author    PrestaShop SA <contact@prestashop.com>
- *  @copyright 2007-2020 PrestaShop SA
+ *  @copyright 2007-2018 PrestaShop SA
  *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  *  International Registered Trademark & Property of PrestaShop SA
- *
- * Don't forget to prefix your containers with your own identifier
- * to avoid any conflicts with others containers.
  */
+if (!defined('_PS_VERSION_'))
+  exit;
 
-const as_snippet = '//admin.apisearch.io/' + index_id + '.js?' +
-        'static_token=' + static_token +
-        '&url_cart=' + url_cart +
-        '&url_search=' + url_search +
-        '&show_more=' + show_more +
-        '&show_less=' + show_less +
-        '&results=' + results +
-        '&empty_results=' + empty_results +
-        '&clear_filters=' + clear_filters +
-//        '&user_id=' + user_id +
-        '&add_to_cart=' + add_to_bag;
-(function (d, t) {
-  var f = d.createElement(t), s = d.getElementsByTagName(t)[0];
-  f.src = ('https:' == location.protocol ? 'https:' : 'http:') + as_snippet;
-  f.setAttribute('charset', 'utf-8');
-  f.setAttribute('defer', '');
-  s.parentNode.insertBefore(f, s)
-}(document, 'script'));
+class apisearchas_searchModuleFrontController extends ModuleFrontController {
+  
+  public function initContent() {
+    parent::initContent();
+    
+    $this->setTemplate('module:apisearch/views/templates/front/as_search.tpl');
+  }
+}

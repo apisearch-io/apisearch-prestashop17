@@ -35,7 +35,7 @@ class Apisearch extends Module {
   public function __construct() {
     $this->name = 'apisearch';
     $this->tab = 'search_filter';
-    $this->version = '1.1.1';
+    $this->version = '1.1.2';
     $this->author = 'eComm360';
     $this->need_instance = 0;
 
@@ -54,6 +54,16 @@ class Apisearch extends Module {
     Configuration::updateValue('AS_INDEX', '');
     Configuration::updateValue('AS_TOKEN', '');
     Configuration::updateValue('AS_SHOP', '');
+    
+    $meta_as = new Meta();
+    $meta_as->page = 'module-apisearch-as_search';
+    $meta_as->title = $this->l('Apisearch - Search');
+    $meta_as->description = $this->l('Search by Apisearch');
+    $meta_as->url_rewrite = $this->l('as_search');
+    
+    if (!$meta_as->save()) {
+      return false;
+    }
 
     return parent::install() && $this->registerHook('header') && $this->registerHook('top') && $this->registerHook('actionObjectProductAddAfter') && $this->registerHook('actionObjectProductUpdateAfter') && $this->registerHook('actionObjectProductDeleteBefore') && $this->registerHook('actionObjectOrderUpdateAfter');
   }
@@ -64,6 +74,13 @@ class Apisearch extends Module {
     Configuration::deleteByName('AS_TOKEN');
     Configuration::deleteByName('AS_SHOP');
 
+    $meta_as = Meta::getMetaByPage('module-checkoutpro-as_search', Context::getContext()->language->id);
+    $meta_as = new Meta($meta_as['id_meta']);
+
+    if (!$meta_as->delete()) {
+      return false;
+    }
+    
     return parent::uninstall();
   }
 
@@ -192,14 +209,14 @@ class Apisearch extends Module {
       Media::addJsDef(array(
           'index_id' => Configuration::get('AS_INDEX', Context::getContext()->language->id),
           'static_token' => Tools::getToken(false),
-          'url_search' => urlencode($this->context->link->getPageLink('search')),
+          'url_search' => urlencode($this->context->link->getModuleLink('apisearch', 'as_search')),
           'url_cart' => urlencode($this->context->link->getPageLink('cart')),
           'show_more' => urlencode($this->l('Show more')),
           'show_less' => urlencode($this->l('Show less')),
           'results' => urlencode($this->l('Results:')),
           'empty_results' => urlencode($this->l('Empty results for:')),
           'clear_filters' => urlencode($this->l('Clear filters')),
-          'add_to_cart' => urlencode($this->l('Add to cart')),
+          'add_to_bag' => urlencode($this->l('Add to cart')),
 //          'user_id' => $this->context->cookie->__get('id_guest')
       ));
       $this->context->controller->addJS($this->_path . 'views/js/front.js');
@@ -231,8 +248,10 @@ class Apisearch extends Module {
         }
 
         $item = $this->buildItems(array(array('id_product' => $product->id)), $lang['id_lang']);
-        $apisearch_client->putItem($item);
-        $apisearch_client->flush();
+        if (!empty($item)) {
+          $apisearch_client->putItem($item);
+          $apisearch_client->flush();
+        }
       }
     }
   }
@@ -255,8 +274,10 @@ class Apisearch extends Module {
         }
 
         $item = $this->buildItems(array(array('id_product' => $product->id)), $lang['id_lang']);
-        $apisearch_client->putItem($item);
-        $apisearch_client->flush();
+        if (!empty($item)) {
+          $apisearch_client->putItem($item);
+          $apisearch_client->flush();
+        }
       }
     }
   }
@@ -316,8 +337,10 @@ class Apisearch extends Module {
               }
 
               $item = $this->buildItems(array(array('id_product' => $product_obj->id)), $lang['id_lang']);
-              $apisearch_client->putItem($item);
-              $apisearch_client->flush();
+              if (!empty($item)) {
+                $apisearch_client->putItem($item);
+                $apisearch_client->flush();
+              }
             }
           }
         }
@@ -578,10 +601,10 @@ class Apisearch extends Module {
     $available = 0;
     if ($available_for_order) {
       if (Configuration::get('PS_STOCK_MANAGEMENT')) {
-        if (Configuration::get('PS_ORDER_OUT_OF_STOCK')) {
+        if ((Configuration::get('PS_ORDER_OUT_OF_STOCK') && $out_of_stock == 2) || $out_of_stock == 1) {
           $available = 1;
         } else {
-          if (Product::getRealQuantity($id, $combination_id) >= $minimal_quantity || $out_of_stock == 1) {
+          if (Product::getRealQuantity($id, $combination_id) >= $minimal_quantity) {
             $available = 1;
           }
         }
