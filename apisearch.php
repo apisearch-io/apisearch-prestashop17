@@ -30,12 +30,16 @@ if (!defined('_PS_VERSION_')) {
 
 class Apisearch extends Module {
 
+    const DEFAULT_AS_CLUST_URL = 'https://eu1.apisearch.cloud';
+    const DEFAULT_AS_ADMIN_URL = 'https://apisearch.cloud';
+    const DEFAULT_AS_API_VERSION = 'v1';
+
   protected $config_form = false;
 
   public function __construct() {
     $this->name = 'apisearch';
     $this->tab = 'search_filter';
-    $this->version = '1.1.2';
+    $this->version = '1.1.3';
     $this->author = 'eComm360';
     $this->need_instance = 0;
 
@@ -50,17 +54,20 @@ class Apisearch extends Module {
   }
 
   public function install() {
+      Configuration::updateValue('AS_CLUSTER_URL', '');
+      Configuration::updateValue('AS_ADMIN_URL', '');
+      Configuration::updateValue('AS_API_VERSION', '');
     Configuration::updateValue('AS_APP', '');
     Configuration::updateValue('AS_INDEX', '');
     Configuration::updateValue('AS_TOKEN', '');
     Configuration::updateValue('AS_SHOP', '');
-    
+
     $meta_as = new Meta();
     $meta_as->page = 'module-apisearch-as_search';
     $meta_as->title = $this->l('Apisearch - Search');
     $meta_as->description = $this->l('Search by Apisearch');
     $meta_as->url_rewrite = $this->l('as_search');
-    
+
     if (!$meta_as->save()) {
       return false;
     }
@@ -69,6 +76,9 @@ class Apisearch extends Module {
   }
 
   public function uninstall() {
+      Configuration::deleteByName('AS_CLUSTER_URL');
+      Configuration::deleteByName('AS_ADMIN_URL');
+      Configuration::deleteByName('AS_API_VERSION');
     Configuration::deleteByName('AS_APP');
     Configuration::deleteByName('AS_INDEX');
     Configuration::deleteByName('AS_TOKEN');
@@ -80,7 +90,7 @@ class Apisearch extends Module {
     if (!$meta_as->delete()) {
       return false;
     }
-    
+
     return parent::uninstall();
   }
 
@@ -111,7 +121,7 @@ class Apisearch extends Module {
     $helper->token = Tools::getAdminTokenLite('AdminModules');
 
     Configuration::loadConfiguration();
-    
+
     $helper->tpl_vars = array(
         'fields_value' => $this->getConfigFormValues(),
         'languages' => $this->context->controller->getLanguages(),
@@ -128,6 +138,27 @@ class Apisearch extends Module {
                 'icon' => 'icon-cogs',
             ),
             'input' => array(
+                array(
+                    'col' => 3,
+                    'type' => 'text',
+                    'label' => $this->l('Apisearch Cluster Url'),
+                    'placeholder' => self::DEFAULT_AS_CLUST_URL,
+                    'name' => 'AS_CLUSTER_URL',
+                ),
+                array(
+                    'col' => 3,
+                    'type' => 'text',
+                    'label' => $this->l('Apisearch Admin Url'),
+                    'placeholder' => self::DEFAULT_AS_ADMIN_URL,
+                    'name' => 'AS_ADMIN_URL',
+                ),
+                array(
+                    'col' => 3,
+                    'type' => 'text',
+                    'label' => $this->l('Apisearch Api Version'),
+                    'placeholder' => self::DEFAULT_AS_API_VERSION,
+                    'name' => 'AS_API_VERSION',
+                ),
                 array(
                     'col' => 3,
                     'type' => 'text',
@@ -166,8 +197,13 @@ class Apisearch extends Module {
   }
 
   protected function getConfigFormValues() {
-    $form_values = array('AS_APP' => Configuration::get('AS_APP'));
-    foreach ($this->context->controller->getLanguages() as $language) {
+      $form_values = array(
+          'AS_CLUSTER_URL' => Configuration::get('AS_CLUSTER_URL'),
+          'AS_ADMIN_URL' => Configuration::get('AS_ADMIN_URL'),
+          'AS_API_VERSION' => Configuration::get('AS_API_VERSION'),
+          'AS_APP' => Configuration::get('AS_APP'),
+      );
+      foreach ($this->context->controller->getLanguages() as $language) {
       $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);
       $form_values['AS_TOKEN'][$language['id_lang']] = Configuration::get('AS_TOKEN', $language['id_lang']);
     }
@@ -206,8 +242,13 @@ class Apisearch extends Module {
     if ($peticiones > 0) {
       $this->context->controller->addCSS($this->_path . 'views/css/font-awesome.min.css');
 
-      Media::addJsDef(array(
-          'index_id' => Configuration::get('AS_INDEX', Context::getContext()->language->id),
+        $admin_url = Configuration::get('AS_ADMIN_URL');
+        $admin_url = $admin_url == "" ? self::DEFAULT_AS_ADMIN_URL : $admin_url;
+
+
+        Media::addJsDef(array(
+            'admin_url' => $admin_url,
+            'index_id' => Configuration::get('AS_INDEX', Context::getContext()->language->id),
           'static_token' => Tools::getToken(false),
           'url_search' => urlencode($this->context->link->getModuleLink('apisearch', 'as_search')),
           'url_cart' => urlencode($this->context->link->getPageLink('cart')),
@@ -319,7 +360,7 @@ class Apisearch extends Module {
         foreach ($order->getProducts() as $product) {
           if ($product['product_quantity'] == $product['product_quantity_in_stock'] && $product['product_quantity_return'] == 0 && $product['product_quantity_reinjected'] == 0)
             continue;
-          
+
           $product_obj = new Product($product['product_id']);
           if (Validate::isLoadedObject($product_obj) && $product_obj->active) {
             $indexs = array();
@@ -355,7 +396,13 @@ class Apisearch extends Module {
       $id_lang = Context::getContext()->language->id;
     }
 
-    $app_id = Configuration::get('AS_APP');
+      $cluster_url = Configuration::get('AS_CLUSTER_URL');
+      $cluster_url = $cluster_url == "" ? self::DEFAULT_AS_CLUST_URL : $cluster_url;
+      $api_version = Configuration::get('AS_API_VERSION');
+      $api_version = $api_version == "" ? self::DEFAULT_AS_API_VERSION : $api_version;
+
+
+      $app_id = Configuration::get('AS_APP');
     $index_id = Configuration::get('AS_INDEX', $id_lang);
     $token = Configuration::get('AS_TOKEN', $id_lang);
 
@@ -363,7 +410,7 @@ class Apisearch extends Module {
       return false;
     }
 
-    $apisearch_client = new ApisearchClient('https://eu1.apisearch.io', 'v1');
+      $apisearch_client = new ApisearchClient($cluster_url, $api_version);
     $apisearch_client->setCredentials($app_id, $index_id, $token);
 
     return $apisearch_client;
@@ -407,7 +454,7 @@ class Apisearch extends Module {
           $item = new Product($product['id_product'], true, $id_lang, reset($shops));
         }
       }
-      
+
       $available = $this->getAvailability($item->id, $item->available_for_order, $item->out_of_stock, $item->minimal_quantity);
 
       $reference = $item->reference;
@@ -417,7 +464,7 @@ class Apisearch extends Module {
       $price = Product::getPriceStatic($item->id, true, null, Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
       $old_price = Product::getPriceStatic($item->id, true, null, Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
       $img = Product::getCover($item->id);
-      
+
       if (!$this->checkImgExists($img['id_image'])) {
         continue;
       }
@@ -512,7 +559,7 @@ class Apisearch extends Module {
               'str' => 'Without discount'
           )
       );
-      
+
       $item_array = array(
           'uuid' => array(
               'id' => $item->id,
@@ -618,7 +665,7 @@ class Apisearch extends Module {
   public function getTranslation($string, $source, $id_lang) {
 
     $string = preg_replace("/\\\*'/", "\'", $string);
-    
+
     $iso = Language::getIsoById($id_lang);
 
     $filesByPriority = array(
@@ -635,7 +682,7 @@ class Apisearch extends Module {
     $file_exists = false;
     global $_MODULE;
     $_MODULE = array();
-    
+
     foreach ($filesByPriority as $file) {
       if (file_exists($file)) {
         $file_exists = true;
@@ -643,7 +690,7 @@ class Apisearch extends Module {
         $translations = !empty($translations) ? array_merge($translations, $_MODULE) : $_MODULE;
       }
     }
-    
+
     if (!$file_exists) {
       return stripslashes($string);
     }
@@ -673,7 +720,7 @@ class Apisearch extends Module {
 
     return $ret;
   }
-  
+
   public function getSold($id_product) {
     return Db::getInstance()->getValue('
                         SELECT COUNT(od.product_quantity - od.product_quantity_refunded - od.product_quantity_return - od.product_quantity_reinjected)
@@ -686,16 +733,16 @@ class Apisearch extends Module {
                         AND os.paid = 1'
     );
   }
-  
+
   public function checkImgExists($id_image) {
     $image = new Image($id_image);
-    
+
     if (Configuration::get('PS_LEGACY_IMAGES') && file_exists(_PS_PROD_IMG_DIR_ . $image->id_product . '-' . $image->id . '.' . $image->image_format)) {
       return true;
     } elseif (file_exists(_PS_PROD_IMG_DIR_ . $image->getImgPath() . '.' . $image->image_format)) {
       return true;
     }
-    
+
     return false;
   }
 
