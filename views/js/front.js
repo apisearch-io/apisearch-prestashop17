@@ -26,7 +26,7 @@
  * to avoid any conflicts with others containers.
  */
 
-const as_snippet = '//admin.apisearch.io/' + index_id + '.js?' +
+const as_snippet = admin_url + '/' + index_id + '.js?' +
         'static_token=' + static_token +
         '&url_cart=' + url_cart +
         '&url_search=' + url_search +
@@ -39,7 +39,7 @@ const as_snippet = '//admin.apisearch.io/' + index_id + '.js?' +
         '&add_to_cart=' + add_to_bag;
 (function (d, t) {
   var f = d.createElement(t), s = d.getElementsByTagName(t)[0];
-  f.src = ('https:' == location.protocol ? 'https:' : 'http:') + as_snippet;
+  f.src = as_snippet;
   f.setAttribute('charset', 'utf-8');
   f.setAttribute('defer', '');
   s.parentNode.insertBefore(f, s)
