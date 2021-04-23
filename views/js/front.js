@@ -26,21 +26,10 @@
  * to avoid any conflicts with others containers.
  */
 
-const as_snippet = admin_url + '/' + index_id + '.js?' +
-        'static_token=' + static_token +
-        '&url_cart=' + url_cart +
-        '&url_search=' + url_search +
-        '&show_more=' + show_more +
-        '&show_less=' + show_less +
-        '&results=' + results +
-        '&empty_results=' + empty_results +
-        '&clear_filters=' + clear_filters +
-//        '&user_id=' + user_id +
-        '&add_to_cart=' + add_to_bag;
+const as_url = admin_url + '/' + index_id + '.iframe.min.js';
 (function (d, t) {
   var f = d.createElement(t), s = d.getElementsByTagName(t)[0];
-  f.src = as_snippet;
+  f.src = as_url;
   f.setAttribute('charset', 'utf-8');
-  f.setAttribute('defer', '');
   s.parentNode.insertBefore(f, s)
 }(document, 'script'));
