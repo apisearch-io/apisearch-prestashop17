@@ -64,7 +64,6 @@ class Hooks
                     $lang['id_lang'],
                     '', 100, function(array $items) use ($apisearchClient) {
                     $apisearchClient->putItems($items);
-                    var_dump('Memory used ' . memory_get_usage());
                 }
                 );
                 if (!empty($item)) {

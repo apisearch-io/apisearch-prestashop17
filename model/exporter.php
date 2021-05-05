@@ -43,7 +43,6 @@ class Exporter
                 $apisearchClient->putItems($items);
                 $numberOfIndexedItems += count($items);
                 $numberOfPutCalls++;
-                var_dump('Memory used ' . memory_get_usage());
             });
 
             $apisearchClient->deleteItemsByQuery(array(
