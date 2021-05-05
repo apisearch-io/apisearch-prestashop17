@@ -77,7 +77,7 @@ class ApisearchClient
     {
         $this->request(
             '/{{app_uuid}}/indices/{{index_uuid}}/items',
-            'put',
+            'PUT',
             [],
             array_values($items)
         );
@@ -92,7 +92,7 @@ class ApisearchClient
     {
         $this->request(
             '/{{app_uuid}}/indices/{{index_uuid}}/items',
-            'delete',
+            'DELETE',
             [],
             array_values($uuids)
         );
@@ -107,7 +107,7 @@ class ApisearchClient
     {
         return $this->request(
             '/{{app_uuid}}/indices/{{index_uuid}}/items/by-query',
-            'delete',
+            'DELETE',
             [],
             $query
         );
@@ -144,6 +144,7 @@ class ApisearchClient
         array $body = []
     )
     {
+        $method = strtoupper($method);
         $endpoint = str_replace([
             '{{app_uuid}}',
             '{{index_uuid}}',
@@ -171,7 +172,7 @@ class ApisearchClient
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-        if ('get' !== $method) {
+        if ('GET' !== $method) {
             $data = json_encode($body, JSON_PRESERVE_ZERO_FRACTION);
             curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-type: application/json"));
             curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
