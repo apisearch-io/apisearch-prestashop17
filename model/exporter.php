@@ -49,7 +49,7 @@ class Exporter
                 'q' => '',
                 'filters' => array(
                     'version' => array(
-                        'field' => 'indexed_metadata.as-version',
+                        'field' => 'indexed_metadata.as_version',
                         'values' => array($version),
                         'application_type' => 16
                     )

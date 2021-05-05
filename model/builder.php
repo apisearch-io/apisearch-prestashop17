@@ -150,56 +150,77 @@ class Builder
                 'metadata' => array(
                     'id_product' => (int)$item->id,
                     'id_product_attribute' => isset($id_product_attribute) ? (int)$id_product_attribute : 0,
-                    'name' => (string)$item->name,
-                    'description' => (string)$item->description,
-                    'description_short' => (string)$item->description_short,
+                    'name' => \strip_tags($item->name),
+                    'description' => \strip_tags($item->description),
+                    'description_short' => \strip_tags($item->description_short),
                     'brand' => (string)$item->manufacturer_name,
                     'reference' => (string)$reference,
                     'ean' => (string)$ean13,
                     'upc' => (string)$upc,
-                    'price' => (string)Tools::displayPrice($price),
-                    'old_price' => (string)Tools::displayPrice($old_price),
                     'show_price' => ($item->available_for_order || $item->show_price),
                     'link' => (string)Context::getContext()->link->getProductLink($item),
                     'img' => (string)Context::getContext()->link->getImageLink(isset($item->link_rewrite) ? $item->link_rewrite : Defaults::PLUGIN_NAME, $img['id_image'], 'home_default'),
                     'available' => (bool)$available,
                     'with_discount' => ($old_price - $price > 0),
-                    'minimal_quantity' => (int)$minimal_quantity
-                ),
-                'indexed_metadata' => array(
-                    'as-version' => (int)$version,
-                    'price' => round($price, 2),
-                    'categories' => (array)$categories,
-                    'name' => (string)$item->name,
-                    'available' => $available,
-                    'with_discount' => ($old_price - $price > 0),
+                    'minimal_quantity' => (int)$minimal_quantity,
                     'quantity_discount' => (int)($old_price - $price),
+                    'old_price' => round($old_price, 2),
                     'quantity_sold' => (int)$this->getSold($item->id)
                 ),
+                'indexed_metadata' => array(
+                    'as_version' => (int)$version,
+                    'price' => round($price, 2),
+                    'categories' => $categories,
+                    'available' => $available,
+                    'with_discount' => ($old_price - $price > 0)
+                ),
                 'searchable_metadata' => array(
-                    'name' => (string)$item->name,
-                    'description' => strip_tags($item->description),
-                    'description_short' => strip_tags($item->description_short),
-                    'brand' => (string)$item->manufacturer_name,
+                    'name' => \strip_tags($item->name),
+                    'description' => \strip_tags($item->description),
+                    'description_short' => \strip_tags($item->description_short),
                 ),
                 'suggest' => array(
                     'name' => (string)$item->name,
                 ),
-                'exact_matching_metadata' => array((int)$item->id, (string)$reference, (string)$ean13, (string)$upc)
+                'exact_matching_metadata' => array(
+                    (int)$item->id,
+                    (string)$reference,
+                    (string)$ean13,
+                    (string)$upc
+                )
             );
 
+            #
+            # Setting optional values
+            #
             if (!empty($item->manufacturer_name)) {
                 $itemAsArray['indexed_metadata']['brand'] = (string)$item->manufacturer_name;
+                $itemAsArray['searchable_metadata']['brand'] = (string)$item->manufacturer_name;
             }
+
             if (!empty($item->supplier_name)) {
                 $itemAsArray['indexed_metadata']['supplier'] = (string)$item->supplier_name;
+                $itemAsArray['searchable_metadata']['supplier'] = (string)$item->supplier_name;
             }
+
             foreach ($attributes as $attributeName => $attrValues) {
                 $itemAsArray['indexed_metadata'][Tools::link_rewrite($attributeName)] = (array)$attrValues;
             }
+
             foreach ($features as $featureName => $featValues) {
                 $itemAsArray['indexed_metadata'][Tools::link_rewrite($featureName)] = (array)$featValues;
             }
+
+            #
+            # Filtering empty values from search blocks
+            #
+            $itemAsArray['searchable_metadata'] = array_filter($itemAsArray['searchable_metadata'], function($data) {
+                return !empty($data);
+            });
+
+            $itemAsArray['exact_matching_metadata'] = array_values(array_filter($itemAsArray['exact_matching_metadata'], function($data) {
+                return !empty($data);
+            }));
 
             $items[$item->id] = $itemAsArray;
             $numberOfItems = count($items);
