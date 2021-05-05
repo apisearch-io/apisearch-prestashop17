@@ -44,7 +44,7 @@ class Apisearch extends Module
         $this->name = Defaults::PLUGIN_NAME;
         $this->tab = 'search_filter';
         $this->version = Defaults::PLUGIN_VERSION;
-        $this->author = 'eComm360';
+        $this->author = 'Apisearch Team & Partners';
         $this->need_instance = 0;
         $this->bootstrap = true;
         parent::__construct();
