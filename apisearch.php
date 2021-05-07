@@ -53,9 +53,7 @@ class Apisearch extends Module
         $this->ps_versions_compliancy = array('min' => '1.5', 'max' => _PS_VERSION_);
         $this->connection = new Connection();
         $this->hooks = new Hooks(
-            new Builder(function($text) {
-                return $this->l($text);
-            }),
+            new Builder(),
             $this->connection
         );
     }
@@ -71,6 +69,7 @@ class Apisearch extends Module
         Configuration::updateValue('AS_SHOP', '');
         Configuration::updateValue('AS_INDEX_PRODUCTS_WITHOUT_IMAGE', Defaults::DEFAULT_INDEX_PRODUCTS_WITHOUT_IMAGE);
         Configuration::updateValue('AS_REAL_TIME_INDEXATION', Defaults::DEFAULT_REAL_TIME_INDEXATION);
+        Configuration::updateValue('AS_INDEX_PRODUCT_PURCHASE_COUNT', Defaults::DEFAULT_REAL_TIME_INDEXATION);
 
         $meta_as = new Meta();
         $meta_as->page = 'module-apisearch-as_search';
@@ -102,6 +101,7 @@ class Apisearch extends Module
         Configuration::deleteByName('AS_SHOP');
         Configuration::deleteByName('AS_INDEX_PRODUCTS_WITHOUT_IMAGE');
         Configuration::deleteByName('AS_REAL_TIME_INDEXATION');
+        Configuration::deleteByName('AS_INDEX_PRODUCT_PURCHASE_COUNT');
 
         $meta_as = Meta::getMetaByPage('module-apisearch-as_search', Context::getContext()->language->id);
         $meta_as = new Meta($meta_as['id_meta']);
@@ -239,6 +239,25 @@ class Apisearch extends Module
                         )
                     ),
                 ),
+                array(
+                    'col' => 3,
+                    'type' => 'switch',
+                    'label' => $this->l('Index product purchase count'),
+                    'name' => 'AS_INDEX_PRODUCT_PURCHASE_COUNT',
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('Yes')
+                        ),
+                        array(
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('No')
+                        )
+                    ),
+                ),
             ),
             'submit' => array(
                 'title' => $this->l('Save'),
@@ -265,6 +284,7 @@ class Apisearch extends Module
             'AS_APP' => Configuration::get('AS_APP'),
             'AS_INDEX_PRODUCTS_WITHOUT_IMAGE' => Configuration::get('AS_INDEX_PRODUCTS_WITHOUT_IMAGE'),
             'AS_REAL_TIME_INDEXATION' => Configuration::get('AS_REAL_TIME_INDEXATION'),
+            'AS_INDEX_PRODUCT_PURCHASE_COUNT' => Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT'),
         );
         foreach ($this->context->controller->getLanguages() as $language) {
             $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);

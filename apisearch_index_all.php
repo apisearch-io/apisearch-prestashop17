@@ -26,6 +26,20 @@
  */
 include_once dirname(__FILE__) . '/../../config/config.inc.php';
 include_once dirname(__FILE__) . '/../../init.php';
-require_once __DIR__ . '/model/exporter.php';
 
-Exporter::exportAll();
+require_once __DIR__ . '/model/exporter.php';
+require_once __DIR__ . '/model/builder.php';
+require_once __DIR__ . '/model/connection.php';
+require_once __DIR__ . '/apisearch.php';
+
+$apisearch = new Apisearch();
+$exporter = new Exporter(
+    new Builder(),
+    new Connection()
+);
+
+$start = \time();
+$result = $exporter->exportAll();
+$end = \time();
+var_dump($result[0] . ' products indexed in ' . ($end-$start) . " seconds");
+var_dump($result[1] . ' put calls done');

@@ -9,4 +9,5 @@ class Defaults {
 
     const DEFAULT_INDEX_PRODUCTS_WITHOUT_IMAGE = true;
     const DEFAULT_REAL_TIME_INDEXATION = true;
+    const DEFAULT_AS_INDEX_PRODUCT_PURCHASE_COUNT = false;
 }

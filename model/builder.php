@@ -5,17 +5,15 @@ require_once __DIR__ . '/as_product.php';
 
 class Builder
 {
-    /**
-     * @var Callable
-     */
-    private $translator;
+    private $avoidProductsWithoutImage;
+    private $indexProductPurchaseCount;
 
     /**
-     * @param Closure $translator
      */
-    public function __construct(Closure $translator)
+    public function __construct()
     {
-        $this->translator = $translator;
+        $this->avoidProductsWithoutImage = !\boolval(Configuration::get('AS_INDEX_PRODUCTS_WITHOUT_IMAGE'));
+        $this->indexProductPurchaseCount = \boolval(Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT'));
     }
 
     /**
@@ -27,15 +25,15 @@ class Builder
      *
      * @return array
      */
-    public function buildItems($productsId, $langId, $version, $batch, Callable $flushCallable)
+    public function buildItems($productsId, $langId, $version, $batch, $shopId, Callable $flushCallable)
     {
         if (!isset($langId)) {
             $langId = Context::getContext()->language->id;
         }
 
         $chunks = array_chunk($productsId, $batch);
-        array_walk($chunks, function($productsId) use ($langId, $version, $flushCallable) {
-            $this->buildChunkItems($productsId, $langId, $version, $flushCallable);
+        array_walk($chunks, function($productsId) use ($langId, $version, $shopId, $flushCallable) {
+            $this->buildChunkItems($productsId, $langId, $version, $shopId, $flushCallable);
         });
     }
 
@@ -47,9 +45,9 @@ class Builder
      *
      * @return array
      */
-    public function buildChunkItems($productsId, $langId, $version, Callable $flushCallable)
+    public function buildChunkItems($productsId, $langId, $version, $shopId, Callable $flushCallable)
     {
-        $products = ASProduct::getFullProductsById($productsId, $langId);
+        $products = ASProduct::getFullProductsById($productsId, $langId, $shopId);
         $items = array_filter(array_map(function($product) use ($langId, $version) {
             return $this->buildItemFromProduct($product, $langId, $version);
         }, $products));
@@ -72,22 +70,6 @@ class Builder
         $productAvailableForOrder = $product['available_for_order'];
         $productOutOfStock = $product['out_of_stock'];
 
-        if (Shop::isFeatureActive()) {
-            if (empty(Configuration::get('AS_SHOP')))
-                return false;
-
-            $assoc = json_decode(Configuration::get('AS_SHOP'), 1);
-            if (!isset($assoc['shop']) || $assoc['shop'] == false)
-                return false;
-
-            $shops_product = array_column(Product::getShopsByProduct($productId), 'id_shop');
-            if (!in_array(Context::getContext()->shop->id, $shops_product)) {
-                $shops_assoc = $assoc['shop'];
-                $shops = array_intersect($shops_product, $shops_assoc);
-                $item = new Product($productId, true, $langId, reset($shops));
-            }
-        }
-
         $product['available'] = $this->getAvailability($productId, $productAvailableForOrder, $productOutOfStock, $product['minimal_quantity']);
         $reference = $product['reference'];
         $ean13 = $product['ean13'];
@@ -98,8 +80,8 @@ class Builder
         $old_price = Product::getPriceStatic($productId, true, null, Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
 
         if (
-            !\boolval(Configuration::get('AS_INDEX_PRODUCTS_WITHOUT_IMAGE')) &&
-            empty($img['id_image'])
+            $this->avoidProductsWithoutImage &&
+            empty($img)
         ) {
             return false;
         }
@@ -182,7 +164,6 @@ class Builder
                 'minimal_quantity' => (int)$minimal_quantity,
                 'quantity_discount' => (int)($old_price - $price),
                 'old_price' => round($old_price, 2),
-                'quantity_sold' => (int)$this->getSold($productId)
             ),
             'indexed_metadata' => array(
                 'as_version' => (int)$version,
@@ -226,6 +207,10 @@ class Builder
 
         foreach ($features as $featureName => $featValues) {
             $itemAsArray['indexed_metadata'][Tools::link_rewrite($featureName)] = (array)$featValues;
+        }
+
+        if ($this->indexProductPurchaseCount) {
+            $itemAsArray['indexed_metadata']['quantity_sold'] = $this->getSold($productId);
         }
 
         #
@@ -288,15 +273,5 @@ class Builder
             AND os.logable = 1
             AND os.paid = 1'
         );
-    }
-
-    /**
-     * @param $text
-     *
-     * @return mixed
-     */
-    private function translate($text)
-    {
-        return ($this->translator)($text);
     }
 }

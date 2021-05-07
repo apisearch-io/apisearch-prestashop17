@@ -30,8 +30,8 @@ class Exporter
 
         foreach ($apisearchClients as $langId => $apisearchClient) {
 
-            $productsId = self::getExportableProducts($langId);
-            if (empty($productsId)) {
+            $productsIdByShopId = self::getExportableProducts($langId);
+            if (empty($productsIdByShopId)) {
                 continue;
             }
 
@@ -41,11 +41,14 @@ class Exporter
              */
             $version = \strval(rand(1000000000, 9999999999));
             $bulkNumber = 200;
-            $this->builder->buildItems($productsId, $langId, $version, $bulkNumber, function(array $items) use ($apisearchClient, &$numberOfIndexedItems, &$numberOfPutCalls) {
-                $apisearchClient->putItems($items);
-                $numberOfIndexedItems += count($items);
-                $numberOfPutCalls++;
-            });
+
+            foreach ($productsIdByShopId as $shopId => $productsId) {
+                $this->builder->buildItems($productsId, $langId, $version, $bulkNumber, $shopId, function(array $items) use ($apisearchClient, &$numberOfIndexedItems, &$numberOfPutCalls) {
+                    $apisearchClient->putItems($items);
+                    $numberOfIndexedItems += count($items);
+                    $numberOfPutCalls++;
+                });
+            }
 
             $apisearchClient->deleteItemsByQuery(array(
                 'q' => '',
@@ -116,16 +119,16 @@ class Exporter
             return array();
         }
 
-        $shop_og = Context::getContext()->shop->id;
-        $allProductsId = array();
+        $shopOg = Context::getContext()->shop->id;
+        $productsIdByShopId = array();
         foreach ($assoc['shop'] as $shopId) {
             Shop::setContext(Shop::getContext(), $shopId);
-            $allProductsId = array_merge($allProductsId, $this->getNonFeaturedShopProducts($langId, $shopId));
+            $productsIdByShopId[$shopId] = $this->getNonFeaturedShopProducts($langId, $shopId);
         }
 
-        Shop::setContext(Shop::getContext(), $shop_og);
+        Shop::setContext(Shop::getContext(), $shopOg);
 
-        return array_unique($allProductsId);
+        return $productsIdByShopId;
     }
 
     /**
@@ -152,6 +155,6 @@ class Exporter
             }
         }
 
-        return $productsId;
+        return [$shopId => $productsId];
     }
 }

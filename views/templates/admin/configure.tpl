@@ -55,6 +55,7 @@
         url: '{/literal}{$module_dir|escape:'htmlall':'UTF-8'}{literal}' + 'ajax.php' + '?rand=' + new Date().getTime(),
         async: true,
         cache: false,
+        timeout: 600000, // 10 minutes timeout
         dataType: "json",
         headers: {"cache-control": "no-cache"},
         data: {
@@ -65,6 +66,9 @@
           $('#as-sync-container #as-ajax').show();
         },
         success: function (jsonData) {
+          $('#as-sync-container #as-ajax').hide();
+        },
+        error: function (jsonData) {
           $('#as-sync-container #as-ajax').hide();
         }
       });

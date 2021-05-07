@@ -44,16 +44,10 @@ function syncProducts()
     require_once __DIR__ . '/model/connection.php';
     require_once __DIR__ . '/apisearch.php';
 
-    $apisearch = new Apisearch();
     $exporter = new Exporter(
-        new Builder(function($text) use ($apisearch) {
-            return $apisearch->l($text);
-        }),
+        new Builder(),
         new Connection()
     );
 
-    $result = $exporter->exportAll();
-    var_dump(DbPDO::$num . ' SQL queries done');
-    var_dump($result[0] . ' products indexed');
-    var_dump($result[1] . ' put calls done');
+    $exporter->exportAll();
 }

@@ -37,7 +37,7 @@ class ASProduct
      *
      * @return mixed
      */
-    public static function getFullProductsById($productsId, $langId)
+    public static function getFullProductsById($productsId, $langId, $shopId)
     {
         $prefix = _DB_PREFIX_;
         $productIdsAsString = implode(',', $productsId);
@@ -45,10 +45,11 @@ class ASProduct
             SELECT p.*, ps.advanced_stock_management, im.id_image, pl.*
             FROM {$prefix}product p
                 LEFT JOIN ps_product_lang `pl` ON p.`id_product` = pl.`id_product` AND pl.`id_lang` = $langId
-                LEFT JOIN {$prefix}product_shop `c` ON p.`id_product` = c.`id_product` AND c.`id_shop` = 1
+                LEFT JOIN {$prefix}product_shop `c` ON p.`id_product` = c.`id_product` AND c.`id_shop` = $shopId
                 LEFT JOIN {$prefix}product_shop ps ON ps.id_product = p.id_product
                 LEFT JOIN {$prefix}image_shop im ON im.id_product = p.id_product AND im.cover = 1
-                INNER JOIN {$prefix}product_shop product_shop ON (product_shop.id_product = p.id_product AND product_shop.id_shop = 1)
+                LEFT JOIN {$prefix}image_lang iml ON im.id_image = iml.id_image AND iml.id_lang = $langId AND im.`id_shop` = $shopId
+                INNER JOIN {$prefix}product_shop product_shop ON (product_shop.id_product = p.id_product AND product_shop.id_shop = $shopId)
             WHERE p.id_product IN($productIdsAsString);
         ";
 
@@ -79,7 +80,7 @@ class ASProduct
                 LEFT JOIN ps_feature_lang fl ON (fl.id_feature = fp.id_feature AND fl.id_lang = $langId)
                 LEFT JOIN ps_feature_value_lang fvl ON (fvl.id_feature_value = fp.id_feature_value AND fvl.id_lang = $langId)
                 LEFT JOIN {$prefix}feature f ON (f.id_feature = fp.id_feature)
-                INNER JOIN {$prefix}product_shop product_shop ON (product_shop.id_product = p.id_product AND product_shop.id_shop = 1)
+                INNER JOIN {$prefix}product_shop product_shop ON (product_shop.id_product = p.id_product AND product_shop.id_shop = $shopId)
             WHERE p.`id_product` IN($productIdsAsString)
             GROUP BY p.id_product
         ";
