@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ .'/as_product.php';
+
 class Exporter
 {
     private $builder;
@@ -38,7 +40,7 @@ class Exporter
              * Id_land
              */
             $version = \strval(rand(1000000000, 9999999999));
-            $bulkNumber = 100;
+            $bulkNumber = 200;
             $this->builder->buildItems($productsId, $langId, $version, $bulkNumber, function(array $items) use ($apisearchClient, &$numberOfIndexedItems, &$numberOfPutCalls) {
                 $apisearchClient->putItems($items);
                 $numberOfIndexedItems += count($items);
@@ -95,7 +97,7 @@ class Exporter
     {
         return Shop::isFeatureActive()
             ? static::getFeaturedShopProducts($langId)
-            : static::getNonFeaturedShopProducts($langId);
+            : static::getNonFeaturedShopProducts($langId, Context::getContext()->shop->id);
     }
 
     /**
@@ -116,9 +118,9 @@ class Exporter
 
         $shop_og = Context::getContext()->shop->id;
         $allProductsId = array();
-        foreach ($assoc['shop'] as $shop_id) {
-            Shop::setContext(Shop::getContext(), $shop_id);
-            $allProductsId = array_merge($allProductsId, $this->getNonFeaturedShopProducts($langId));
+        foreach ($assoc['shop'] as $shopId) {
+            Shop::setContext(Shop::getContext(), $shopId);
+            $allProductsId = array_merge($allProductsId, $this->getNonFeaturedShopProducts($langId, $shopId));
         }
 
         Shop::setContext(Shop::getContext(), $shop_og);
@@ -128,16 +130,17 @@ class Exporter
 
     /**
      * @param string $langId
+     * @param string $shopId
      *
      * @return array
      */
-    private function getNonFeaturedShopProducts($langId)
+    private function getNonFeaturedShopProducts($langId, $shopId)
     {
-        $count = 100;
+        $count = 500;
         $offset = 0;
         $productsId = array();
         while (true) {
-            $products = Product::getProducts($langId, $offset, $count, 'id_product', 'asc', false, true);
+            $products = ASProduct::getProductsId($langId, $offset, $count, $shopId);
             if (!empty($products)) {
                 $productsId = array_merge($productsId, array_map(function(array $product) {
                     return $product['id_product'];

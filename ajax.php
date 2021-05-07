@@ -53,6 +53,7 @@ function syncProducts()
     );
 
     $result = $exporter->exportAll();
+    var_dump(DbPDO::$num . ' SQL queries done');
     var_dump($result[0] . ' products indexed');
     var_dump($result[1] . ' put calls done');
 }

@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/apisearchClient.php';
+require_once __DIR__ . '/apisearch_client.php';
 require_once __DIR__ . '/defaults.php';
 
 /**

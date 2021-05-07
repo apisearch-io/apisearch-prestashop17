@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/defaults.php';
+require_once __DIR__ . '/as_product.php';
 
 class Builder
 {
@@ -21,218 +22,224 @@ class Builder
      * @param int[] $productsId
      * @param          $langId
      * @param string $version
-     * @param int $bulkCount
+     * @param int $batch
      * @param callable $flushCallable
      *
      * @return array
      */
-    public function buildItems($productsId, $langId, $version, $bulkCount, Callable $flushCallable)
+    public function buildItems($productsId, $langId, $version, $batch, Callable $flushCallable)
     {
         if (!isset($langId)) {
             $langId = Context::getContext()->language->id;
         }
 
-        $items = array();
-        foreach ($productsId as $productId) {
-            $item = new Product($productId, true, $langId);
+        $chunks = array_chunk($productsId, $batch);
+        array_walk($chunks, function($productsId) use ($langId, $version, $flushCallable) {
+            $this->buildChunkItems($productsId, $langId, $version, $flushCallable);
+        });
+    }
 
-            if (Shop::isFeatureActive()) {
-                if (empty(Configuration::get('AS_SHOP')))
-                    continue;
+    /**
+     * @param int[] $productsId
+     * @param          $langId
+     * @param string $version
+     * @param callable $flushCallable
+     *
+     * @return array
+     */
+    public function buildChunkItems($productsId, $langId, $version, Callable $flushCallable)
+    {
+        $products = ASProduct::getFullProductsById($productsId, $langId);
+        $items = array_filter(array_map(function($product) use ($langId, $version) {
+            return $this->buildItemFromProduct($product, $langId, $version);
+        }, $products));
 
-                $assoc = json_decode(Configuration::get('AS_SHOP'), 1);
-                if (!isset($assoc['shop']) || $assoc['shop'] == false)
-                    continue;
-
-                $shops_product = array_column(Product::getShopsByProduct($productId), 'id_shop');
-                if (!in_array(Context::getContext()->shop->id, $shops_product)) {
-                    $shops_assoc = $assoc['shop'];
-                    $shops = array_intersect($shops_product, $shops_assoc);
-                    $item = new Product($productId, true, $langId, reset($shops));
-                }
-            }
-
-            $available = $this->getAvailability($item->id, $item->available_for_order, $item->out_of_stock, $item->minimal_quantity);
-
-            $reference = $item->reference;
-            $ean13 = $item->ean13;
-            $upc = $item->upc;
-            $minimal_quantity = $item->minimal_quantity;
-            $price = Product::getPriceStatic($item->id, true, null, Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
-            $old_price = Product::getPriceStatic($item->id, true, null, Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
-            $img = Product::getCover($item->id);
-
-            if (
-                !\boolval(Configuration::get('AS_INDEX_PRODUCTS_WITHOUT_IMAGE')) &&
-                !$this->checkImgExists($img['id_image'])
-            ) {
-                continue;
-            }
-
-            $categories = array();
-            foreach ($item->getCategories() as $category_id) {
-                if ($category_id == Configuration::get('PS_ROOT_CATEGORY') || $category_id == Configuration::get('PS_HOME_CATEGORY'))
-                    continue;
-
-                $category = new Category($category_id, $langId);
-                if (Validate::isLoadedObject($category)) {
-                    $categories[] = $category->name;
-                }
-            }
-
-            $attributes = array();
-            $features = array();
-            if ($item->visibility == 'both' || $item->visibility == 'search') {
-                if ($item->hasAttributes()) {
-                    $combinations = $item->getAttributeCombinations($langId);
-                    foreach ($combinations as $combination) {
-                        if ($combination['default_on']) {
-                            $id_product_attribute = $combination['id_product_attribute'];
-                            $reference = empty($item->reference) ? $combination['reference'] : $item->reference;
-                            $ean13 = empty($item->ean13) ? $combination['ean13'] : $item->ean13;
-                            $upc = empty($item->upc) ? $combination['upc'] : $item->upc;
-                            $minimal_quantity = $combination['minimal_quantity'];
-                            $price = Product::getPriceStatic($item->id, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
-                            $old_price = Product::getPriceStatic($item->id, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
-                            $available = $this->getAvailability($item->id, $item->available_for_order, $item->out_of_stock, $combination['minimal_quantity'], $combination['id_product_attribute']);
-
-                            $combinations_images = $item->getCombinationImages($langId);
-                            if (isset($combinations_images[$combination['id_product_attribute']])) {
-                                $id_images = array_column($combinations_images[$combination['id_product_attribute']], 'id_image');
-                                if (!empty($id_images) && !in_array($img['id_image'], $id_images)) {
-                                    $img = array('id_image' => $id_images[0]);
-                                }
-                            }
-                        }
-                        if (!isset($attributes[$combination['group_name']]) || (isset($attributes[$combination['group_name']]) && !in_array($combination['attribute_name'], $attributes[$combination['group_name']])))
-                            $attributes[$combination['group_name']][] = $combination['attribute_name'];
-                    }
-                    if (!$available) {
-                        foreach ($combinations as $combination) {
-                            if ($this->getAvailability($item->id, $item->available_for_order, $item->out_of_stock, $combination['minimal_quantity'], $combination['id_product_attribute'])) {
-                                $id_product_attribute = $combination['id_product_attribute'];
-                                $reference = empty($item->reference) ? $combination['reference'] : $item->reference;
-                                $ean13 = empty($item->ean13) ? $combination['ean13'] : $item->ean13;
-                                $upc = empty($item->upc) ? $combination['upc'] : $item->upc;
-                                $minimal_quantity = $combination['minimal_quantity'];
-                                $price = Product::getPriceStatic($item->id, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
-                                $old_price = Product::getPriceStatic($item->id, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
-                                $available = 1;
-
-                                $combinations_images = $item->getCombinationImages($langId);
-                                if (isset($combinations_images[$combination['id_product_attribute']])) {
-                                    $id_images = array_column($combinations_images[$combination['id_product_attribute']], 'id_image');
-                                    if (!empty($id_images) && !in_array($img['id_image'], $id_images)) {
-                                        $img = array('id_image' => $id_images[0]);
-                                    }
-                                }
-
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                $item_features = $item->getFrontFeatures($langId);
-                if (!empty($item_features)) {
-                    foreach ($item_features as $item_feature) {
-                        if (!isset($features[$item_feature['name']]) || (isset($features[$item_feature['name']]) && !in_array($item_feature['value'], $features[$item_feature['name']])))
-                            $features[$item_feature['name']][] = $item_feature['value'];
-                    }
-                }
-            }
-
-            $itemAsArray = array(
-                'uuid' => array(
-                    'id' => $item->id,
-                    'type' => 'product'
-                ),
-                'metadata' => array(
-                    'id_product' => (int)$item->id,
-                    'id_product_attribute' => isset($id_product_attribute) ? (int)$id_product_attribute : 0,
-                    'name' => \strip_tags($item->name),
-                    'description' => \strip_tags($item->description),
-                    'description_short' => \strip_tags($item->description_short),
-                    'brand' => (string)$item->manufacturer_name,
-                    'reference' => (string)$reference,
-                    'ean' => (string)$ean13,
-                    'upc' => (string)$upc,
-                    'show_price' => ($item->available_for_order || $item->show_price),
-                    'link' => (string)Context::getContext()->link->getProductLink($item),
-                    'img' => (string)Context::getContext()->link->getImageLink(isset($item->link_rewrite) ? $item->link_rewrite : Defaults::PLUGIN_NAME, $img['id_image'], 'home_default'),
-                    'available' => (bool)$available,
-                    'with_discount' => ($old_price - $price > 0),
-                    'minimal_quantity' => (int)$minimal_quantity,
-                    'quantity_discount' => (int)($old_price - $price),
-                    'old_price' => round($old_price, 2),
-                    'quantity_sold' => (int)$this->getSold($item->id)
-                ),
-                'indexed_metadata' => array(
-                    'as_version' => (int)$version,
-                    'price' => round($price, 2),
-                    'categories' => $categories,
-                    'available' => $available,
-                    'with_discount' => ($old_price - $price > 0)
-                ),
-                'searchable_metadata' => array(
-                    'name' => \strip_tags($item->name),
-                    'description' => \strip_tags($item->description),
-                    'description_short' => \strip_tags($item->description_short),
-                ),
-                'suggest' => array(
-                    'name' => (string)$item->name,
-                ),
-                'exact_matching_metadata' => array(
-                    (int)$item->id,
-                    (string)$reference,
-                    (string)$ean13,
-                    (string)$upc
-                )
-            );
-
-            #
-            # Setting optional values
-            #
-            if (!empty($item->manufacturer_name)) {
-                $itemAsArray['indexed_metadata']['brand'] = (string)$item->manufacturer_name;
-                $itemAsArray['searchable_metadata']['brand'] = (string)$item->manufacturer_name;
-            }
-
-            if (!empty($item->supplier_name)) {
-                $itemAsArray['indexed_metadata']['supplier'] = (string)$item->supplier_name;
-                $itemAsArray['searchable_metadata']['supplier'] = (string)$item->supplier_name;
-            }
-
-            foreach ($attributes as $attributeName => $attrValues) {
-                $itemAsArray['indexed_metadata'][Tools::link_rewrite($attributeName)] = (array)$attrValues;
-            }
-
-            foreach ($features as $featureName => $featValues) {
-                $itemAsArray['indexed_metadata'][Tools::link_rewrite($featureName)] = (array)$featValues;
-            }
-
-            #
-            # Filtering empty values from search blocks
-            #
-            $itemAsArray['searchable_metadata'] = array_filter($itemAsArray['searchable_metadata'], function($data) {
-                return !empty($data);
-            });
-
-            $itemAsArray['exact_matching_metadata'] = array_values(array_filter($itemAsArray['exact_matching_metadata'], function($data) {
-                return !empty($data);
-            }));
-
-            $items[$item->id] = $itemAsArray;
-            $numberOfItems = count($items);
-            if ($numberOfItems >= $bulkCount) {
-                $flushCallable($items);
-                $items = [];
-            }
-        }
-
-        if (count($items) > 0) {
+        if (!empty($items)) {
             $flushCallable($items);
         }
+    }
+
+    /**
+     * @param array $product
+     * @param int $langId
+     * @param string $version
+     *
+     * @return array
+     */
+    public function buildItemFromProduct($product, $langId, $version)
+    {
+        $productId = $product['id_product'];
+        $productAvailableForOrder = $product['available_for_order'];
+        $productOutOfStock = $product['out_of_stock'];
+
+        if (Shop::isFeatureActive()) {
+            if (empty(Configuration::get('AS_SHOP')))
+                return false;
+
+            $assoc = json_decode(Configuration::get('AS_SHOP'), 1);
+            if (!isset($assoc['shop']) || $assoc['shop'] == false)
+                return false;
+
+            $shops_product = array_column(Product::getShopsByProduct($productId), 'id_shop');
+            if (!in_array(Context::getContext()->shop->id, $shops_product)) {
+                $shops_assoc = $assoc['shop'];
+                $shops = array_intersect($shops_product, $shops_assoc);
+                $item = new Product($productId, true, $langId, reset($shops));
+            }
+        }
+
+        $product['available'] = $this->getAvailability($productId, $productAvailableForOrder, $productOutOfStock, $product['minimal_quantity']);
+        $reference = $product['reference'];
+        $ean13 = $product['ean13'];
+        $upc = $product['upc'];
+        $minimal_quantity = $product['minimal_quantity'];
+        $img = $product['id_image'];
+        $price = Product::getPriceStatic($productId, true, null, Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
+        $old_price = Product::getPriceStatic($productId, true, null, Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
+
+        if (
+            !\boolval(Configuration::get('AS_INDEX_PRODUCTS_WITHOUT_IMAGE')) &&
+            empty($img['id_image'])
+        ) {
+            return false;
+        }
+
+        $categoriesName = array();
+        foreach ($product['categories_id'] as $categoryId) {
+            if ($categoryId == Configuration::get('PS_ROOT_CATEGORY') || $categoryId == Configuration::get('PS_HOME_CATEGORY'))
+                continue;
+
+            $category = new Category($categoryId, $langId);
+            if (Validate::isLoadedObject($category)) {
+                $categoriesName[] = $category->name;
+            }
+        }
+
+        $attributes = array();
+        $features = array();
+        if (in_array($product['visibility'], array('both', 'search'))) {
+            $combinations = ASProduct::getAttributeCombinations($productId, $langId);
+            $available = false;
+
+            foreach ($combinations as $combination) {
+                if (isset($combination['default_on'])) {
+                    $id_product_attribute = $combination['id_product_attribute'];
+                    $reference = empty($product['reference']) ? $combination['reference'] : $product['reference'];
+                    $ean13 = empty($product['ean13']) ? $combination['ean13'] : $product['ean13'];
+                    $upc = empty($product['upd']) ? $combination['upc'] : $product['upd'];
+                    $minimal_quantity = $combination['minimal_quantity'];
+                    $price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
+                    $old_price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
+                    $available = $this->getAvailability($productId, $productAvailableForOrder, $productOutOfStock, $combination['minimal_quantity'], $combination['id_product_attribute']);
+                    $img = $combination['id_image'] ?? '';
+                }
+                if (!isset($attributes[$combination['group_name']]) || (isset($attributes[$combination['group_name']]) && !in_array($combination['attribute_name'], $attributes[$combination['group_name']]))) {
+                    $attributes[$combination['group_name']][] = $combination['attribute_name'];
+                }
+            }
+
+            if (!$available) {
+                foreach ($combinations as $combination) {
+                    if ($this->getAvailability($product['id_product'], $productAvailableForOrder, $productOutOfStock, $combination['minimal_quantity'], $combination['id_product_attribute'])) {
+                        $id_product_attribute = $combination['id_product_attribute'];
+                        $reference = empty($product['reference']) ? $combination['reference'] : $product['reference'];
+                        $ean13 = empty($product['ean13']) ? $combination['ean13'] : $product['ean13'];
+                        $upc = empty($product['upd']) ? $combination['upc'] : $product['upd'];
+                        $minimal_quantity = $combination['minimal_quantity'];
+                        $price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
+                        $old_price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
+                        $available = 1;
+                        $img = $combination['id_image'] ?? '';
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        $link = (string)Context::getContext()->link->getProductLink($productId);
+        $image = (string)Context::getContext()->link->getImageLink($product['link_rewrite'] ?? Defaults::PLUGIN_NAME, $img, 'home_default');
+
+        $itemAsArray = array(
+            'uuid' => array(
+                'id' => $productId,
+                'type' => 'product'
+            ),
+            'metadata' => array(
+                'id_product' => $productId,
+                'id_product_attribute' => isset($id_product_attribute) ? (int)$id_product_attribute : 0,
+                'name' => $product['name'],
+                'description' => $product['description'],
+                'description_short' => $product['description_short'],
+                'reference' => (string)$reference,
+                'ean' => (string)$ean13,
+                'upc' => (string)$upc,
+                'show_price' => ($productAvailableForOrder || $product['show_price']),
+                'link' => $link,
+                'img' => $image,
+                'available' => (bool)$available,
+                'with_discount' => ($old_price - $price > 0),
+                'minimal_quantity' => (int)$minimal_quantity,
+                'quantity_discount' => (int)($old_price - $price),
+                'old_price' => round($old_price, 2),
+                'quantity_sold' => (int)$this->getSold($productId)
+            ),
+            'indexed_metadata' => array(
+                'as_version' => (int)$version,
+                'price' => round($price, 2),
+                'categories' => $categoriesName,
+                'available' => $available,
+                'with_discount' => ($old_price - $price > 0)
+            ),
+            'searchable_metadata' => array(
+                'name' => $product['name'],
+                'description' => $product['description'],
+                'description_short' => $product['description_short'],
+            ),
+            'suggest' => array(
+                'name' => $product['name'],
+            ),
+            'exact_matching_metadata' => array(
+                \strval($productId),
+                \strval($reference),
+                \strval($ean13),
+                \strval($upc)
+            )
+        );
+
+        #
+        # Setting optional values
+        #
+        if (!empty($product['manufacturer'])) {
+            $itemAsArray['indexed_metadata']['brand'] = $product['manufacturer']['name'];
+            $itemAsArray['searchable_metadata']['brand'] = $product['manufacturer']['name'];
+        }
+        
+        if (!empty($product['supplier'])) {
+            $itemAsArray['indexed_metadata']['brand'] = $product['supplier']['name'];
+            $itemAsArray['searchable_metadata']['brand'] = $product['supplier']['name'];
+        }
+
+        foreach ($attributes as $attributeName => $attrValues) {
+            $itemAsArray['indexed_metadata'][Tools::link_rewrite($attributeName)] = (array)$attrValues;
+        }
+
+        foreach ($features as $featureName => $featValues) {
+            $itemAsArray['indexed_metadata'][Tools::link_rewrite($featureName)] = (array)$featValues;
+        }
+
+        #
+        # Filtering empty values from search blocks
+        #
+        $itemAsArray['searchable_metadata'] = array_filter($itemAsArray['searchable_metadata'], function($data) {
+            return !empty($data);
+        });
+
+        $itemAsArray['exact_matching_metadata'] = array_values(array_filter($itemAsArray['exact_matching_metadata'], function($data) {
+            return !empty($data);
+        }));
+
+        return $itemAsArray;
     }
 
     /**
@@ -262,22 +269,6 @@ class Builder
         }
 
         return $available;
-    }
-
-
-    /**
-     * @param $imageId
-     *
-     * @return bool
-     */
-    private function checkImgExists($imageId)
-    {
-        $image = new Image($imageId);
-
-        return (
-            Configuration::get('PS_LEGACY_IMAGES') && file_exists(_PS_PROD_IMG_DIR_ . $image->id_product . '-' . $image->id . '.' . $image->image_format) ||
-            file_exists(_PS_PROD_IMG_DIR_ . $image->getImgPath() . '.' . $image->image_format)
-        );
     }
 
     /**
