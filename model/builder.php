@@ -263,7 +263,7 @@ class Builder
      */
     public function getSold($productId)
     {
-        return Db::getInstance()->getValue('
+        $sql = '
             SELECT COUNT(od.product_quantity - od.product_quantity_refunded - od.product_quantity_return - od.product_quantity_reinjected)
             FROM ' . _DB_PREFIX_ . 'order_detail od
             LEFT JOIN ' . _DB_PREFIX_ . 'orders o ON (o.id_order = od.id_order)
@@ -272,6 +272,8 @@ class Builder
             AND o.valid = 1
             AND os.logable = 1
             AND os.paid = 1'
-        );
+        ;
+
+        return Db::getInstance()->getValue($sql);
     }
 }

@@ -44,7 +44,7 @@ class ASProduct
         $sql = "
             SELECT p.*, ps.advanced_stock_management, im.id_image, pl.*
             FROM {$prefix}product p
-                LEFT JOIN ps_product_lang `pl` ON p.`id_product` = pl.`id_product` AND pl.`id_lang` = $langId
+                LEFT JOIN {$prefix}product_lang `pl` ON p.`id_product` = pl.`id_product` AND pl.`id_lang` = $langId
                 LEFT JOIN {$prefix}product_shop `c` ON p.`id_product` = c.`id_product` AND c.`id_shop` = $shopId
                 LEFT JOIN {$prefix}product_shop ps ON ps.id_product = p.id_product
                 LEFT JOIN {$prefix}image_shop im ON im.id_product = p.id_product AND im.cover = 1
@@ -70,31 +70,56 @@ class ASProduct
             SELECT p.id_product, 
                 group_concat(distinct(cp.id_category)) as cp_id_categories, 
                 group_concat(distinct(t.name)) as tag_names,
-                group_concat(distinct(fl.name)) as front_features_names,
-                group_concat(distinct(fvl.value)) as front_features_values
+                group_concat(fp.id_feature, '~~', fp.id_feature_value SEPARATOR '>><<') as features,
+                group_concat(fl.id_feature, '~~',  fl.name SEPARATOR '>><<') as features_lang,
+                group_concat(fvl.id_feature_value, '~~',  fvl.value SEPARATOR '>><<') as features_value
             FROM {$prefix}product p
                 LEFT JOIN {$prefix}product_tag pt ON (pt.id_product = p.id_product)
                 LEFT JOIN {$prefix}tag t ON t.id_tag = `pt`.id_tag
                 LEFT JOIN {$prefix}category_product cp ON cp.id_product = p.id_product
-                LEFT JOIN ps_feature_product fp ON fp.id_product = p.id_product
-                LEFT JOIN ps_feature_lang fl ON (fl.id_feature = fp.id_feature AND fl.id_lang = $langId)
-                LEFT JOIN ps_feature_value_lang fvl ON (fvl.id_feature_value = fp.id_feature_value AND fvl.id_lang = $langId)
-                LEFT JOIN {$prefix}feature f ON (f.id_feature = fp.id_feature)
+                LEFT JOIN {$prefix}feature_product fp ON fp.id_product = p.id_product
+                LEFT JOIN {$prefix}feature_lang fl ON (fl.id_feature = fp.id_feature AND fl.id_lang = $langId)
+                LEFT JOIN {$prefix}feature_value_lang fvl ON (fvl.id_feature_value = fp.id_feature_value AND fvl.id_lang = $langId)
                 INNER JOIN {$prefix}product_shop product_shop ON (product_shop.id_product = p.id_product AND product_shop.id_shop = $shopId)
             WHERE p.`id_product` IN($productIdsAsString)
             GROUP BY p.id_product
         ";
 
         $products = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+
         foreach ($products as $groupsProduct) {
             $productId = $groupsProduct['id_product'];
             if (array_key_exists($productId, $productsIndexedById)) {
                 $productsIndexedById[$productId]['categories_id'] = array_filter(explode(',', $groupsProduct['cp_id_categories']));
                 $productsIndexedById[$productId]['tags'] = array_filter(explode(',', $groupsProduct['tag_names']));
-                $productsIndexedById[$productId]['front_features'] = array_combine(
-                    explode(',', $groupsProduct['front_features_names']),
-                    explode(',', $groupsProduct['front_features_values'])
-                );
+                $features = array_map(function(string $value) {
+                    return explode('~~', $value, 2);
+                }, array_unique(explode('>><<', $groupsProduct['features'])));
+
+                if (!empty($features) && $features[0] !== [""]) {
+                    $featuresLangIndexed = [];
+                    $featuresLang = array_unique(explode('>><<', $groupsProduct['features_lang']));
+                    foreach ($featuresLang as $featureLang) {
+                        $parts = explode('~~', $featureLang, 2);
+                        $featuresLangIndexed[$parts[0]] = $parts[1];
+                    }
+
+                    $featuresValueIndexed = [];
+                    $featuresValue = array_unique(explode('>><<', $groupsProduct['features_value']));
+                    foreach ($featuresValue as $featureValue) {
+                        $parts = explode('~~', $featureValue, 2);
+                        $featuresValueIndexed[$parts[0]] = $parts[1];
+                    }
+
+                    $productsIndexedById[$productId]['front_features'] = [];
+                    foreach ($features as $feature) {
+                        $featureId = $featuresLangIndexed[$feature[0]] ?? null;
+                        $featureValue = $featuresValueIndexed[$feature[1]] ?? null;
+                        if ($featureId && $featuresValue) {
+                            $productsIndexedById[$productId]['front_features'][$featureId] = $featureValue;
+                        }
+                    }
+                }
             }
         }
 

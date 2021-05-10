@@ -2,7 +2,7 @@
 
 class Defaults {
     const DEFAULT_AS_CLUSTER_URL = 'https://eu1.apisearch.cloud';
-    const DEFAULT_AS_ADMIN_URL = 'https://www.apisearch.cloud';
+    const DEFAULT_AS_ADMIN_URL = 'https://static.apisearch.cloud';
     const DEFAULT_AS_API_VERSION = 'v1';
     const PLUGIN_NAME = 'apisearch';
     const PLUGIN_VERSION = '1.2.0';
