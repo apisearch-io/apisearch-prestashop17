@@ -40,7 +40,7 @@ class Exporter
              * Id_land
              */
             $version = \strval(rand(1000000000, 9999999999));
-            $bulkNumber = 200;
+            $bulkNumber = 100;
 
             foreach ($productsIdByShopId as $shopId => $productsId) {
                 $this->builder->buildItems($productsId, $langId, $version, $bulkNumber, $shopId, function(array $items) use ($apisearchClient, &$numberOfIndexedItems, &$numberOfPutCalls) {
