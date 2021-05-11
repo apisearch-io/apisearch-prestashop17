@@ -76,8 +76,8 @@ class Builder
         $upc = $product['upc'];
         $minimal_quantity = $product['minimal_quantity'];
         $img = $product['id_image'];
-        $price = Product::getPriceStatic($productId, true, null, Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
-        $old_price = Product::getPriceStatic($productId, true, null, Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
+        $price = Product::getPriceStatic($productId, true, null, 2);
+        $old_price = Product::getPriceStatic($productId, true, null, 2, null, false, false);
 
         if (
             $this->avoidProductsWithoutImage &&

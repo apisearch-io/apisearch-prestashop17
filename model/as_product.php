@@ -108,7 +108,9 @@ class ASProduct
                     $featuresValue = array_unique(explode('>><<', $groupsProduct['features_value']));
                     foreach ($featuresValue as $featureValue) {
                         $parts = explode('~~', $featureValue, 2);
-                        $featuresValueIndexed[$parts[0]] = $parts[1];
+                        if (count($parts) > 1) {
+                            $featuresValueIndexed[$parts[0]] = $parts[1];
+                        }
                     }
 
                     $productsIndexedById[$productId]['front_features'] = [];
