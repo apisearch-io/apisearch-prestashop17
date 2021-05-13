@@ -101,24 +101,28 @@ class ASProduct
                     $featuresLang = array_unique(explode('>><<', $groupsProduct['features_lang']));
                     foreach ($featuresLang as $featureLang) {
                         $parts = explode('~~', $featureLang, 2);
-                        $featuresLangIndexed[$parts[0]] = $parts[1];
+                        if (count($parts) === 2) {
+                            $featuresLangIndexed[$parts[0]] = $parts[1];
+                        }
                     }
 
                     $featuresValueIndexed = [];
                     $featuresValue = array_unique(explode('>><<', $groupsProduct['features_value']));
                     foreach ($featuresValue as $featureValue) {
                         $parts = explode('~~', $featureValue, 2);
-                        if (count($parts) > 1) {
+                        if (count($parts) === 2) {
                             $featuresValueIndexed[$parts[0]] = $parts[1];
                         }
                     }
 
                     $productsIndexedById[$productId]['front_features'] = [];
                     foreach ($features as $feature) {
-                        $featureId = $featuresLangIndexed[$feature[0]] ?? null;
-                        $featureValue = $featuresValueIndexed[$feature[1]] ?? null;
-                        if ($featureId && $featuresValue) {
-                            $productsIndexedById[$productId]['front_features'][$featureId] = $featureValue;
+                        if (count($feature) === 2) {
+                            $featureId = $featuresLangIndexed[$feature[0]] ?? null;
+                            $featureValue = $featuresValueIndexed[$feature[1]] ?? null;
+                            if ($featureId && $featuresValue) {
+                                $productsIndexedById[$productId]['front_features'][$featureId] = $featureValue;
+                            }
                         }
                     }
                 }
