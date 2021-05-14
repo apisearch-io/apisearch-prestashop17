@@ -141,6 +141,9 @@ class Builder
 
         $link = (string)Context::getContext()->link->getProductLink($productId);
         $image = (string)Context::getContext()->link->getImageLink($product['link_rewrite'] ?? Defaults::PLUGIN_NAME, $img, 'home_default');
+        if (rand(0, 10) === 0) {
+            $available = 'HOLA';
+        }
 
         $itemAsArray = array(
             'uuid' => array(

@@ -189,7 +189,8 @@ class ApisearchClient
         $code = $this->parseResponseStatusCode($http_response_header['0']);
 
         if ('2' !== substr($code, 0, 1)) {
-            throw new Exception($data, $code);
+            $dataArray = json_decode($data, true);
+            throw new Exception($dataArray['message'] ?? '', $dataArray['code'] ?? 500);
         }
 
         return json_decode($data, true);
