@@ -167,27 +167,32 @@ class ApisearchClient
             $url .= "&$parameterKey=$parameterValue";
         }
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
         if ('GET' !== $method) {
-            $data = json_encode($body, JSON_PRESERVE_ZERO_FRACTION);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-type: application/json"));
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            $data = json_encode($body);
+            $context = stream_context_create([
+                'http' => [
+                    'method' => $method,
+                    'ignore_errors' => true,
+                    'header' => "Content-type: application/json\r\n".
+                        "Accept: application/json\r\n".
+                        "Connection: close\r\n".
+                        'Content-length: '.strlen($data)."\r\n",
+                    'content' => $data,
+                ],
+            ]);
+
+            $data = file_get_contents($url, false, $context);
+        } else {
+            $data = file_get_contents($url);
         }
 
-        $response = curl_exec($ch);
-        $err = curl_error($ch);
-        curl_close($ch);
+        $code = $this->parseResponseStatusCode($http_response_header['0']);
 
-        if ($err) {
-            throw new Exception($err);
-            return;
+        if ('2' !== substr($code, 0, 1)) {
+            throw new Exception($data, $code);
         }
 
-        return json_decode($response, true);
+        return json_decode($data, true);
     }
 
     /**
