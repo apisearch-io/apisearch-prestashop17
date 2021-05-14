@@ -144,41 +144,40 @@ class Builder
 
         $itemAsArray = array(
             'uuid' => array(
-                'id' => $productId,
+                'id' => \strval($productId),
                 'type' => 'product'
             ),
             'metadata' => array(
-                'id_product' => $productId,
-                'id_product_attribute' => isset($id_product_attribute) ? (int)$id_product_attribute : 0,
-                'name' => $product['name'],
-                'description' => $product['description'],
-                'description_short' => $product['description_short'],
-                'reference' => (string)$reference,
-                'ean' => (string)$ean13,
-                'upc' => (string)$upc,
-                'show_price' => ($productAvailableForOrder || $product['show_price']),
-                'link' => $link,
-                'img' => $image,
-                'available' => (bool)$available,
-                'with_discount' => ($old_price - $price > 0),
-                'minimal_quantity' => (int)$minimal_quantity,
-                'quantity_discount' => (int)($old_price - $price),
-                'old_price' => round($old_price, 2),
+                'id_product' => \strval($productId),
+                'id_product_attribute' => \strval(isset($id_product_attribute) ? $id_product_attribute : 0),
+                'name' => \strval($product['name']),
+                'description' => \strval($product['description']),
+                'description_short' => \strval($product['description_short']),
+                'reference' => \strval($reference),
+                'ean' => \strval($ean13),
+                'upc' => \strval($upc),
+                'show_price' => \boolval(($productAvailableForOrder || $product['show_price'])),
+                'link' => \strval($link),
+                'img' => \strval($image),
+                'with_discount' => \strval(($old_price - $price > 0)),
+                'minimal_quantity' => \intval($minimal_quantity),
+                'quantity_discount' => \intval($old_price - $price),
+                'old_price' => \round($old_price, 2),
             ),
             'indexed_metadata' => array(
-                'as_version' => (int)$version,
-                'price' => round($price, 2),
+                'as_version' => \intval($version),
+                'price' => \round($price, 2),
                 'categories' => $categoriesName,
-                'available' => $available,
-                'with_discount' => ($old_price - $price > 0)
+                'available' => \boolval($available),
+                'with_discount' => \boolval($old_price - $price > 0)
             ),
             'searchable_metadata' => array(
-                'name' => $product['name'],
-                'description' => $product['description'],
-                'description_short' => $product['description_short'],
+                'name' => \strval($product['name']),
+                'description' => \strval($product['description']),
+                'description_short' => \strval($product['description_short']),
             ),
             'suggest' => array(
-                'name' => $product['name'],
+                'name' => \strval($product['name']),
             ),
             'exact_matching_metadata' => array(
                 \strval($productId),
@@ -192,13 +191,13 @@ class Builder
         # Setting optional values
         #
         if (!empty($product['manufacturer'])) {
-            $itemAsArray['indexed_metadata']['brand'] = $product['manufacturer']['name'];
-            $itemAsArray['searchable_metadata']['brand'] = $product['manufacturer']['name'];
+            $itemAsArray['indexed_metadata']['brand'] = \strval($product['manufacturer']['name']);
+            $itemAsArray['searchable_metadata']['brand'] = \strval($product['manufacturer']['name']);
         }
         
         if (!empty($product['supplier'])) {
-            $itemAsArray['indexed_metadata']['brand'] = $product['supplier']['name'];
-            $itemAsArray['searchable_metadata']['brand'] = $product['supplier']['name'];
+            $itemAsArray['indexed_metadata']['brand'] = \strval($product['supplier']['name']);
+            $itemAsArray['searchable_metadata']['brand'] = \strval($product['supplier']['name']);
         }
 
         foreach ($attributes as $attributeName => $attrValues) {
@@ -210,7 +209,7 @@ class Builder
         }
 
         if ($this->indexProductPurchaseCount) {
-            $itemAsArray['indexed_metadata']['quantity_sold'] = $this->getSold($productId);
+            $itemAsArray['indexed_metadata']['quantity_sold'] = \intval($this->getSold($productId));
         }
 
         #
