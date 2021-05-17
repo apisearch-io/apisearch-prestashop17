@@ -62,9 +62,12 @@ class Hooks
                 $item = $this->builder->buildItems(
                     [$productId],
                     $lang['id_lang'],
-                    '', 100, function(array $items) use ($apisearchClient) {
-                    $apisearchClient->putItems($items);
-                }
+                    '',
+                    100,
+                    Context::getContext()->shop->id,
+                    function(array $items) use ($apisearchClient) {
+                        $apisearchClient->putItems($items);
+                    }
                 );
                 if (!empty($item)) {
                     $apisearchClient->putItems([$item]);
