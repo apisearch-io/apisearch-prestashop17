@@ -1,17 +1,17 @@
 <?php
 
-require_once __DIR__ .'/as_product.php';
+require_once __DIR__ . '/apisearch_product.php';
 
-class Exporter
+class ApisearchExporter
 {
     private $builder;
     private $connection;
 
     /**
-     * @param Builder    $builder
-     * @param Connection $connection
+     * @param ApisearchBuilder    $builder
+     * @param ApisearchConnection $connection
      */
-    public function __construct(Builder $builder, Connection $connection)
+    public function __construct(ApisearchBuilder $builder, ApisearchConnection $connection)
     {
         $this->builder = $builder;
         $this->connection = $connection;
@@ -143,7 +143,7 @@ class Exporter
         $offset = 0;
         $productsId = array();
         while (true) {
-            $products = ASProduct::getProductsId($langId, $offset, $count, $shopId);
+            $products = ApisearchProduct::getProductsId($langId, $offset, $count, $shopId);
             if (!empty($products)) {
                 $productsId = array_merge($productsId, array_map(function(array $product) {
                     return $product['id_product'];

@@ -39,14 +39,14 @@ if (Tools::getIsset('method') && Tools::getIsset('ajax')) {
 
 function syncProducts()
 {
-    require_once __DIR__ . '/model/exporter.php';
-    require_once __DIR__ . '/model/builder.php';
-    require_once __DIR__ . '/model/connection.php';
+    require_once __DIR__ . '/model/apisearch_exporter.php';
+    require_once __DIR__ . '/model/apisearch_builder.php';
+    require_once __DIR__ . '/model/apisearch_connection.php';
     require_once __DIR__ . '/apisearch.php';
 
-    $exporter = new Exporter(
-        new Builder(),
-        new Connection()
+    $exporter = new ApisearchExporter(
+        new ApisearchBuilder(),
+        new ApisearchConnection()
     );
 
     $exporter->exportAll();

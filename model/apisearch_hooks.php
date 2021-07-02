@@ -1,17 +1,17 @@
 <?php
 
-require_once __DIR__ . '/defaults.php';
+require_once __DIR__ . '/apisearch_defaults.php';
 
-class Hooks
+class ApisearchHooks
 {
     private $builder;
     private $connection;
 
     /**
-     * @param $builder
-     * @param $connection
+     * @param ApisearchBuilder $builder
+     * @param ApisearchConnection $connection
      */
-    public function __construct($builder, $connection)
+    public function __construct(ApisearchBuilder $builder, ApisearchConnection $connection)
     {
         $this->builder = $builder;
         $this->connection = $connection;

@@ -1,9 +1,9 @@
 <?php
 
-require_once __DIR__ . '/as_manufacturer.php';
-require_once __DIR__ . '/as_supplier.php';
+require_once __DIR__ . '/apisearch_manufacturer.php';
+require_once __DIR__ . '/apisearch_supplier.php';
 
-class ASProduct
+class ApisearchProduct
 {
     /**
      * @param $langId
@@ -55,8 +55,8 @@ class ASProduct
 
         $products = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
         $productsIndexedById = [];
-        $manufacturers = ASManufacturer::getManufacturers(array_column($products, 'id_manufacturer'));
-        $suppliers = ASManufacturer::getManufacturers(array_column($products, 'id_supplier'));
+        $manufacturers = ApisearchManufacturer::getManufacturers(array_column($products, 'id_manufacturer'));
+        $suppliers = ApisearchManufacturer::getManufacturers(array_column($products, 'id_supplier'));
         foreach ($products as $product) {
             $product['manufacturer'] = $manufacturers[$product['id_manufacturer']] ?? '';
             $product['supplier'] = $suppliers[$product['id_supplier']] ?? '';

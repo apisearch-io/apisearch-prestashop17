@@ -1,6 +1,6 @@
 <?php
 
-class ASManufacturer
+class ApisearchManufacturer
 {
     private static $manufacturers = array();
 

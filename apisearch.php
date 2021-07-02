@@ -28,10 +28,10 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once __DIR__ . '/model/defaults.php';
-require_once __DIR__ . '/model/hooks.php';
-require_once __DIR__ . '/model/builder.php';
-require_once __DIR__ . '/model/connection.php';
+require_once __DIR__ . '/model/apisearch_defaults.php';
+require_once __DIR__ . '/model/apisearch_hooks.php';
+require_once __DIR__ . '/model/apisearch_builder.php';
+require_once __DIR__ . '/model/apisearch_connection.php';
 
 class Apisearch extends Module
 {
@@ -41,9 +41,9 @@ class Apisearch extends Module
 
     public function __construct()
     {
-        $this->name = Defaults::PLUGIN_NAME;
+        $this->name = ApisearchDefaults::PLUGIN_NAME;
         $this->tab = 'search_filter';
-        $this->version = Defaults::PLUGIN_VERSION;
+        $this->version = ApisearchDefaults::PLUGIN_VERSION;
         $this->author = 'Apisearch Team';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -51,9 +51,9 @@ class Apisearch extends Module
         $this->displayName = $this->l('Apisearch');
         $this->description = $this->l('Search over your products, and give to your users unique, amazing and unforgettable experiences.');
         $this->ps_versions_compliancy = array('min' => '1.5', 'max' => _PS_VERSION_);
-        $this->connection = new Connection();
-        $this->hooks = new Hooks(
-            new Builder(),
+        $this->connection = new ApisearchConnection();
+        $this->hooks = new ApisearchHooks(
+            new ApisearchBuilder(),
             $this->connection
         );
     }
@@ -61,15 +61,15 @@ class Apisearch extends Module
     public function install()
     {
         Configuration::updateValue('AS_CLUSTER_URL', '');
-        Configuration::updateValue('AS_ADMIN_URL', Defaults::DEFAULT_AS_ADMIN_URL);
-        Configuration::updateValue('AS_API_VERSION', Defaults::DEFAULT_AS_API_VERSION);
+        Configuration::updateValue('AS_ADMIN_URL', ApisearchDefaults::DEFAULT_AS_ADMIN_URL);
+        Configuration::updateValue('AS_API_VERSION', ApisearchDefaults::DEFAULT_AS_API_VERSION);
         Configuration::updateValue('AS_APP', '');
         Configuration::updateValue('AS_INDEX', '');
         Configuration::updateValue('AS_TOKEN', '');
         Configuration::updateValue('AS_SHOP', '');
-        Configuration::updateValue('AS_INDEX_PRODUCTS_WITHOUT_IMAGE', Defaults::DEFAULT_INDEX_PRODUCTS_WITHOUT_IMAGE);
-        Configuration::updateValue('AS_REAL_TIME_INDEXATION', Defaults::DEFAULT_REAL_TIME_INDEXATION);
-        Configuration::updateValue('AS_INDEX_PRODUCT_PURCHASE_COUNT', Defaults::DEFAULT_REAL_TIME_INDEXATION);
+        Configuration::updateValue('AS_INDEX_PRODUCTS_WITHOUT_IMAGE', ApisearchDefaults::DEFAULT_INDEX_PRODUCTS_WITHOUT_IMAGE);
+        Configuration::updateValue('AS_REAL_TIME_INDEXATION', ApisearchDefaults::DEFAULT_REAL_TIME_INDEXATION);
+        Configuration::updateValue('AS_INDEX_PRODUCT_PURCHASE_COUNT', ApisearchDefaults::DEFAULT_REAL_TIME_INDEXATION);
 
         $meta_as = new Meta();
         $meta_as->page = 'module-apisearch-as_search';
@@ -164,21 +164,21 @@ class Apisearch extends Module
                     'col' => 3,
                     'type' => 'text',
                     'label' => $this->l('Apisearch Cluster Url'),
-                    'placeholder' => Defaults::DEFAULT_AS_CLUSTER_URL,
+                    'placeholder' => ApisearchDefaults::DEFAULT_AS_CLUSTER_URL,
                     'name' => 'AS_CLUSTER_URL',
                 ),
                 array(
                     'col' => 3,
                     'type' => 'text',
                     'label' => $this->l('Apisearch Admin Url'),
-                    'placeholder' => Defaults::DEFAULT_AS_ADMIN_URL,
+                    'placeholder' => ApisearchDefaults::DEFAULT_AS_ADMIN_URL,
                     'name' => 'AS_ADMIN_URL',
                 ),
                 array(
                     'col' => 3,
                     'type' => 'text',
                     'label' => $this->l('Apisearch Api Version'),
-                    'placeholder' => Defaults::DEFAULT_AS_API_VERSION,
+                    'placeholder' => ApisearchDefaults::DEFAULT_AS_API_VERSION,
                     'name' => 'AS_API_VERSION',
                 ),
                 array(
@@ -326,7 +326,7 @@ class Apisearch extends Module
         if ($this->connection->isProperlyConfigured()) {
             $admin_url = Configuration::get('AS_ADMIN_URL');
             $admin_url = $admin_url == ""
-                ? Defaults::DEFAULT_AS_ADMIN_URL
+                ? ApisearchDefaults::DEFAULT_AS_ADMIN_URL
                 : $admin_url;
 
             Media::addJsDef(array(

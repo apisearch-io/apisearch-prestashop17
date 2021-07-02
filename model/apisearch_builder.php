@@ -1,9 +1,9 @@
 <?php
 
-require_once __DIR__ . '/defaults.php';
-require_once __DIR__ . '/as_product.php';
+require_once __DIR__ . '/apisearch_defaults.php';
+require_once __DIR__ . '/apisearch_product.php';
 
-class Builder
+class ApisearchBuilder
 {
     private $avoidProductsWithoutImage;
     private $indexProductPurchaseCount;
@@ -47,7 +47,7 @@ class Builder
      */
     public function buildChunkItems($productsId, $langId, $version, $shopId, Callable $flushCallable)
     {
-        $products = ASProduct::getFullProductsById($productsId, $langId, $shopId);
+        $products = ApisearchProduct::getFullProductsById($productsId, $langId, $shopId);
         $items = array_filter(array_map(function($product) use ($langId, $version) {
             return $this->buildItemFromProduct($product, $langId, $version);
         }, $products));
@@ -100,7 +100,7 @@ class Builder
         $attributes = array();
         $features = array();
         if (in_array($product['visibility'], array('both', 'search'))) {
-            $combinations = ASProduct::getAttributeCombinations($productId, $langId);
+            $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
             $available = false;
 
             foreach ($combinations as $combination) {
@@ -140,7 +140,7 @@ class Builder
         }
 
         $link = (string)Context::getContext()->link->getProductLink($productId);
-        $image = (string)Context::getContext()->link->getImageLink($product['link_rewrite'] ?? Defaults::PLUGIN_NAME, $img, 'home_default');
+        $image = (string)Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
         if (rand(0, 10) === 0) {
             $available = 'HOLA';
         }

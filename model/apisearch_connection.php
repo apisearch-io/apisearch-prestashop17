@@ -1,12 +1,12 @@
 <?php
 
 require_once __DIR__ . '/apisearch_client.php';
-require_once __DIR__ . '/defaults.php';
+require_once __DIR__ . '/apisearch_defaults.php';
 
 /**
  * Class Connection
  */
-class Connection
+class ApisearchConnection
 {
     private $currentClient;
 
@@ -42,9 +42,9 @@ class Connection
         }
 
         $clusterUrl = Configuration::get('AS_CLUSTER_URL');
-        $clusterUrl = $clusterUrl == "" ? Defaults::DEFAULT_AS_CLUSTER_URL : $clusterUrl;
+        $clusterUrl = $clusterUrl == "" ? ApisearchDefaults::DEFAULT_AS_CLUSTER_URL : $clusterUrl;
         $apiVersion = Configuration::get('AS_API_VERSION');
-        $apiVersion = $apiVersion == "" ? Defaults::DEFAULT_AS_API_VERSION : $apiVersion;
+        $apiVersion = $apiVersion == "" ? ApisearchDefaults::DEFAULT_AS_API_VERSION : $apiVersion;
 
 
         $appId = Configuration::get('AS_APP');

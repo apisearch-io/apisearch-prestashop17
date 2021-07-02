@@ -1,6 +1,6 @@
 <?php
 
-class Defaults {
+class ApisearchDefaults {
     const DEFAULT_AS_CLUSTER_URL = 'https://eu1.apisearch.cloud';
     const DEFAULT_AS_ADMIN_URL = 'https://static.apisearch.cloud';
     const DEFAULT_AS_API_VERSION = 'v1';
