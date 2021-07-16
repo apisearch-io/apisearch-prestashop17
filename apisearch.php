@@ -330,11 +330,13 @@ class Apisearch extends Module
                 : $admin_url;
             
             $user_id = Context::getContext()->customer->id;
-            if($user_id == null)
+            if($user_id == null){
                 $user_id = Context::getContext()->cart->id_guest;
+                $token = sha1('apisearch'. $user_id . $_SERVER['REMOTE_ADDR']. date('Y-m-d'));
+            }else{
+                $token = sha1('apisearch'. $user_id);
+            }
             
-            $token = sha1('apisearch'. $user_id . $_SERVER['REMOTE_ADDR']. date('Y-m-d'));
-
             Media::addJsDef(array(
                 'admin_url' => $admin_url,
                 'apisearch_user_token' => $token,
