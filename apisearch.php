@@ -338,9 +338,9 @@ class Apisearch extends Module
             }
             
             Media::addJsDef(array(
-                'admin_url' => $admin_url,
+                'apisearch_admin_url' => $admin_url,
                 'apisearch_user_token' => $token,
-                'index_id' => Configuration::get('AS_INDEX', Context::getContext()->language->id),
+                'apisearch_index_id' => Configuration::get('AS_INDEX', Context::getContext()->language->id),
             ));
 
             $this

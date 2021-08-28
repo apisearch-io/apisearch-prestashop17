@@ -26,7 +26,7 @@
  * to avoid any conflicts with others containers.
  */
 
-const as_url = admin_url + '/' + index_id + '.iframe.min.js';
+const as_url = apisearch_admin_url + '/' + apisearch_index_id + '.iframe.min.js';
 (function (d, t) {
   var f = d.createElement(t), s = d.getElementsByTagName(t)[0];
   f.src = as_url;
