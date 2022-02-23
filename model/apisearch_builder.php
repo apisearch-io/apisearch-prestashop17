@@ -99,11 +99,18 @@ class ApisearchBuilder
 
         $attributes = array();
         $features = array();
+        $colors = [];
+
         if (in_array($product['visibility'], array('both', 'search'))) {
             $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
             $available = false;
 
             foreach ($combinations as $combination) {
+
+                $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
+                    ? $combination['attribute_color']
+                    : null;
+
                 if (isset($combination['default_on'])) {
                     $id_product_attribute = $combination['id_product_attribute'];
                     $reference = empty($product['reference']) ? $combination['reference'] : $product['reference'];
@@ -132,6 +139,9 @@ class ApisearchBuilder
                         $old_price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
                         $available = 1;
                         $img = $combination['id_image'] ?? '';
+                        $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
+                            ? $combination['attribute_color']
+                            : null;
 
                         break;
                     }
@@ -141,9 +151,6 @@ class ApisearchBuilder
 
         $link = (string)Context::getContext()->link->getProductLink($productId);
         $image = (string)Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
-        if (rand(0, 10) === 0) {
-            $available = 'HOLA';
-        }
 
         $itemAsArray = array(
             'uuid' => array(
@@ -172,7 +179,7 @@ class ApisearchBuilder
                 'price' => \round($price, 2),
                 'categories' => $categoriesName,
                 'available' => \boolval($available),
-                'with_discount' => \boolval($old_price - $price > 0)
+                'with_discount' => \boolval($old_price - $price > 0),
             ),
             'searchable_metadata' => array(
                 'name' => \strval($product['name']),
@@ -189,6 +196,19 @@ class ApisearchBuilder
                 \strval($upc)
             )
         );
+
+        $colors = array_filter($colors, function($value) {
+            return is_string($value) && !empty($value);
+        });
+        if (!empty($colors)) {
+            $colors = array_map('trim', $colors);
+            $colors = array_map(function($color) {
+                return ltrim($color, '#');
+            }, $colors);
+            $colors = array_values($colors);
+            $itemAsArray['indexed_metadata']['color_hex'] = $colors;
+            var_dump($colors);
+        }
 
         #
         # Setting optional values

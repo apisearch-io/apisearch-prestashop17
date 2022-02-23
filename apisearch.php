@@ -162,6 +162,25 @@ class Apisearch extends Module
             'input' => array(
                 array(
                     'col' => 3,
+                    'type' => 'switch',
+                    'label' => $this->l('Display search bar'),
+                    'name' => 'AS_DISPLAY_SEARCH_BAR',
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('Yes')
+                        ),
+                        array(
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('No')
+                        )
+                    ),
+                ),
+                array(
+                    'col' => 3,
                     'type' => 'text',
                     'label' => $this->l('Apisearch Cluster Url'),
                     'placeholder' => ApisearchDefaults::DEFAULT_AS_CLUSTER_URL,
@@ -278,6 +297,7 @@ class Apisearch extends Module
     protected function getConfigFormValues()
     {
         $form_values = array(
+            'AS_DISPLAY_SEARCH_BAR' => Configuration::get('AS_DISPLAY_SEARCH_BAR'),
             'AS_CLUSTER_URL' => Configuration::get('AS_CLUSTER_URL'),
             'AS_ADMIN_URL' => Configuration::get('AS_ADMIN_URL'),
             'AS_API_VERSION' => Configuration::get('AS_API_VERSION'),
@@ -324,6 +344,11 @@ class Apisearch extends Module
     public function hookHeader()
     {
         if ($this->connection->isProperlyConfigured()) {
+            $displaySearchBar = Configuration::get('AS_DISPLAY_SEARCH_BAR');
+            if (!$displaySearchBar) {
+                return;
+            }
+
             $admin_url = Configuration::get('AS_ADMIN_URL');
             $admin_url = $admin_url == ""
                 ? ApisearchDefaults::DEFAULT_AS_ADMIN_URL
@@ -337,15 +362,12 @@ class Apisearch extends Module
                 $token = sha1('apisearch'. $user_id);
             }
             
-            Media::addJsDef(array(
+            $this->context->smarty->assign(array(
                 'apisearch_admin_url' => $admin_url,
                 'apisearch_user_token' => $token,
                 'apisearch_index_id' => Configuration::get('AS_INDEX', Context::getContext()->language->id),
             ));
-
-            $this
-                ->context
-                ->controller->addJS($this->_path . 'views/js/front.js');
+            return $this->display(__FILE__, 'views/templates/front/search.tpl');
         }
     }
 

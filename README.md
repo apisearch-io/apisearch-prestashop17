@@ -10,7 +10,7 @@
 
 ### How to configure
 
-Once you've installed the plugin succesfully, it's time to configure.
+Once you've installed the plugin successfully, it's time to configure.
 
 1. Apisearch Cluster Url
 

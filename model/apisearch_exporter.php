@@ -69,6 +69,39 @@ class ApisearchExporter
     }
 
     /**
+     * @param string $langIsoCode
+     */
+    public function getAllItems($langIsoCode)
+    {
+        $apisearchClients = self::getIndicesClientByLanguageIsoCode();
+        if (!array_key_exists($langIsoCode, $apisearchClients)) {
+            throw new \Exception('Language not found');
+        }
+
+        $langId = $apisearchClients[$langIsoCode]['lang_id'];
+        $productsIdByShopId = self::getExportableProducts($langId);
+        if (empty($productsIdByShopId)) {
+            return [];
+        }
+
+        /**
+         * Items
+         * Id_land
+         */
+        $version = \strval(rand(1000000000, 9999999999));
+        $bulkNumber = 100;
+        $allItems = [];
+
+        foreach ($productsIdByShopId as $shopId => $productsId) {
+            $this->builder->buildItems($productsId, $langId, $version, $bulkNumber, $shopId, function(array $items) use (&$allItems) {
+                $allItems = array_merge($allItems, $items);
+            });
+        }
+
+        return $allItems;
+    }
+
+    /**
      * @return array
      */
     public function getIndicesClientByLanguageId()
@@ -86,6 +119,33 @@ class ApisearchExporter
             $indicesClients[$langId] = $this
                 ->connection
                 ->getConnectionByLanguageId($langId);
+        }
+
+        return array_filter($indicesClients);
+    }
+
+    /**
+     * @return array
+     */
+    public function getIndicesClientByLanguageIsoCode()
+    {
+        $indicesClients = array();
+        $indicesId = [];
+        foreach (Context::getContext()->language->getLanguages(true, Context::getContext()->shop->id) as $lang) {
+            $langIsoCode = $lang['iso_code'];
+            $langId = $lang['id_lang'];
+            $indexId = Configuration::get('AS_INDEX', $langId);
+            if (in_array($indexId, $indicesId)) {
+                continue;
+            }
+
+            $indicesId[] = $indexId;
+            $indicesClients[$langIsoCode] = [
+                'lang_id' => $langId,
+                'connection' => $this
+                    ->connection
+                    ->getConnectionByLanguageId($langId)
+            ];
         }
 
         return array_filter($indicesClients);

@@ -25,20 +25,13 @@
  *  International Registered Trademark & Property of PrestaShop SA
  */
 set_time_limit(1800);
+
 require_once(dirname(__FILE__) . '../../../config/config.inc.php');
 require_once(dirname(__FILE__) . '../../../init.php');
 
-if (Tools::getIsset('method') && Tools::getIsset('ajax')) {
-    if (Tools::getValue('ajax') == true) {
-        switch (Tools::getValue('method')) {
-            case 'syncProducts':
-                syncProducts();
-                die(Tools::jsonEncode(true));
-        }
-    }
-}
+createFeed();
 
-function syncProducts()
+function createFeed()
 {
     require_once __DIR__ . '/model/apisearch_exporter.php';
     require_once __DIR__ . '/model/apisearch_builder.php';
@@ -50,5 +43,19 @@ function syncProducts()
         new ApisearchConnection()
     );
 
-    $exporter->exportAll();
+    $langId = Tools::getValue('lang');
+    $format = Tools::getValue('format');
+    $items = $exporter->getAllItems($langId);
+
+    if ('jsonl' === $format) {
+        foreach ($items as $item) {
+            echo json_encode($item) . "\n";
+        }
+
+    } elseif ('debug' === $format) {
+
+        // Do nothing. Just debug
+    }else {
+        throw new \Exception('Format not found. Use one of these: jsonl');
+    }
 }
