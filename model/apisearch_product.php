@@ -155,6 +155,7 @@ class ApisearchProduct
                 agl.`name` AS group_name,
                 al.`name` AS attribute_name,
                 a.`id_attribute`,
+                a.`color` AS attribute_color,
                 pai.id_product_attribute,
                 i.id_image
             FROM {$prefix}product_attribute pa
@@ -170,7 +171,6 @@ class ApisearchProduct
             GROUP BY pa.id_product_attribute" . ($groupByIdAttributeGroup ? ',ag.`id_attribute_group`' : '');
 
         $res = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
-
         //Get quantity of each variations
         foreach ($res as $key => $row) {
             $res[$key]['quantity'] = StockAvailable::getQuantityAvailableByProduct($row['id_product'], $row['id_product_attribute']);
