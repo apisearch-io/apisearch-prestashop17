@@ -7,6 +7,7 @@ class ApisearchBuilder
 {
     private $avoidProductsWithoutImage;
     private $indexProductPurchaseCount;
+    private $indexProductNoStock;
 
     /**
      */
@@ -14,6 +15,7 @@ class ApisearchBuilder
     {
         $this->avoidProductsWithoutImage = !\boolval(Configuration::get('AS_INDEX_PRODUCTS_WITHOUT_IMAGE'));
         $this->indexProductPurchaseCount = \boolval(Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT'));
+        $this->indexProductNoStock = \boolval(Configuration::get('AS_INDEX_PRODUCT_NO_STOCK'));
     }
 
     /**
@@ -80,13 +82,6 @@ class ApisearchBuilder
         $price = Product::getPriceStatic($productId, true, null, 2);
         $old_price = Product::getPriceStatic($productId, true, null, 2, null, false, false);
 
-        if (
-            $this->avoidProductsWithoutImage &&
-            empty($img)
-        ) {
-            return false;
-        }
-
         $categoriesName = array();
         foreach ($product['categories_id'] as $categoryId) {
             if ($categoryId == Configuration::get('PS_ROOT_CATEGORY') || $categoryId == Configuration::get('PS_HOME_CATEGORY'))
@@ -104,6 +99,7 @@ class ApisearchBuilder
 
         $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
         $available = $this->getAvailability($productId, $productAvailableForOrder, $productOutOfStock, $product['minimal_quantity']);
+        $combinationImg = null;
 
         foreach ($combinations as $combination) {
 
@@ -120,7 +116,7 @@ class ApisearchBuilder
                 $price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
                 $old_price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
                 $available = $this->getAvailability($productId, $productAvailableForOrder, $productOutOfStock, $combination['minimal_quantity'], $combination['id_product_attribute']);
-                $img = $combination['id_image'] ?? '';
+                $combinationImg = $combination['id_image'] ?? '';
             }
             if (!isset($attributes[$combination['group_name']]) || (isset($attributes[$combination['group_name']]) && !in_array($combination['attribute_name'], $attributes[$combination['group_name']]))) {
                 $attributes[$combination['group_name']][] = $combination['attribute_name'];
@@ -138,7 +134,7 @@ class ApisearchBuilder
                     $price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
                     $old_price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
                     $available = 1;
-                    $img = $combination['id_image'] ?? '';
+                    $combinationImg = $combination['id_image'] ?? '';
                     $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
                         ? $combination['attribute_color']
                         : null;
@@ -148,12 +144,20 @@ class ApisearchBuilder
             }
         }
 
-        if (!$available && !Configuration::get('AS_INDEX_PRODUCT_NO_STOCK')) {
+        if (!$available && !$this->indexProductNoStock) {
+            return false;
+        }
+
+        if (
+            $this->avoidProductsWithoutImage &&
+            empty($img) &&
+            empty($combinationImg)
+        ) {
             return false;
         }
 
         $link = (string)Context::getContext()->link->getProductLink($productId);
-        $image = (string)Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
+        $image = (string)Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $combinationImg ?? $img, 'home_default');
 
         $frontFeatures = $product['front_features'];
         $frontFeaturesKeyFixed = [];

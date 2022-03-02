@@ -191,14 +191,14 @@ class Apisearch extends Module
                     'col' => 3,
                     'type' => 'text',
                     'label' => $this->l('Apisearch Cluster Url'),
-                    'placeholder' => ApisearchDefaults::DEFAULT_AS_CLUSTER_URL,
+                    // 'placeholder' => ApisearchDefaults::DEFAULT_AS_CLUSTER_URL,
                     'name' => 'AS_CLUSTER_URL',
                 ),
                 array(
                     'col' => 3,
                     'type' => 'text',
                     'label' => $this->l('Apisearch Admin Url'),
-                    'placeholder' => ApisearchDefaults::DEFAULT_AS_ADMIN_URL,
+                    // 'placeholder' => ApisearchDefaults::DEFAULT_AS_ADMIN_URL,
                     'name' => 'AS_ADMIN_URL',
                 ),
                 array(
