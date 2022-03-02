@@ -38,6 +38,7 @@ class Apisearch extends Module
     private $hooks;
     private $connection;
     protected $config_form = false;
+    private $updates = [];
 
     public function __construct()
     {
@@ -56,6 +57,10 @@ class Apisearch extends Module
             new ApisearchBuilder(),
             $this->connection
         );
+
+        if (!$this->isRegisteredInHook('actionUpdateQuantity')) {
+            $this->registerHook('actionUpdateQuantity');
+        }
     }
 
     public function install()
@@ -69,7 +74,8 @@ class Apisearch extends Module
         Configuration::updateValue('AS_SHOP', '');
         Configuration::updateValue('AS_INDEX_PRODUCTS_WITHOUT_IMAGE', ApisearchDefaults::DEFAULT_INDEX_PRODUCTS_WITHOUT_IMAGE);
         Configuration::updateValue('AS_REAL_TIME_INDEXATION', ApisearchDefaults::DEFAULT_REAL_TIME_INDEXATION);
-        Configuration::updateValue('AS_INDEX_PRODUCT_PURCHASE_COUNT', ApisearchDefaults::DEFAULT_REAL_TIME_INDEXATION);
+        Configuration::updateValue('AS_INDEX_PRODUCT_PURCHASE_COUNT', ApisearchDefaults::DEFAULT_AS_INDEX_PRODUCT_PURCHASE_COUNT);
+        Configuration::updateValue('AS_INDEX_PRODUCT_NO_STOCK', ApisearchDefaults::DEFAULT_AS_INDEX_PRODUCT_NO_STOCK);
 
         $meta_as = new Meta();
         $meta_as->page = 'module-apisearch-as_search';
@@ -87,7 +93,8 @@ class Apisearch extends Module
             $this->registerHook('actionObjectProductAddAfter') &&
             $this->registerHook('actionObjectProductUpdateAfter') &&
             $this->registerHook('actionObjectProductDeleteBefore') &&
-            $this->registerHook('actionObjectOrderUpdateAfter');
+            $this->registerHook('actionObjectOrderUpdateAfter') &&
+            $this->registerHook('actionUpdateQuantity');
     }
 
     public function uninstall()
@@ -102,6 +109,7 @@ class Apisearch extends Module
         Configuration::deleteByName('AS_INDEX_PRODUCTS_WITHOUT_IMAGE');
         Configuration::deleteByName('AS_REAL_TIME_INDEXATION');
         Configuration::deleteByName('AS_INDEX_PRODUCT_PURCHASE_COUNT');
+        Configuration::deleteByName('AS_INDEX_PRODUCT_NO_STOCK');
 
         $meta_as = Meta::getMetaByPage('module-apisearch-as_search', Context::getContext()->language->id);
         $meta_as = new Meta($meta_as['id_meta']);
@@ -277,6 +285,25 @@ class Apisearch extends Module
                         )
                     ),
                 ),
+                array(
+                    'col' => 3,
+                    'type' => 'switch',
+                    'label' => $this->l('Index non available products'),
+                    'name' => 'AS_INDEX_PRODUCT_NO_STOCK',
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('Yes')
+                        ),
+                        array(
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('No')
+                        )
+                    ),
+                ),
             ),
             'submit' => array(
                 'title' => $this->l('Save'),
@@ -305,6 +332,7 @@ class Apisearch extends Module
             'AS_INDEX_PRODUCTS_WITHOUT_IMAGE' => Configuration::get('AS_INDEX_PRODUCTS_WITHOUT_IMAGE'),
             'AS_REAL_TIME_INDEXATION' => Configuration::get('AS_REAL_TIME_INDEXATION'),
             'AS_INDEX_PRODUCT_PURCHASE_COUNT' => Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT'),
+            'AS_INDEX_PRODUCT_NO_STOCK' => Configuration::get('AS_INDEX_PRODUCT_NO_STOCK'),
         );
         foreach ($this->context->controller->getLanguages() as $language) {
             $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);
@@ -377,7 +405,13 @@ class Apisearch extends Module
     public function hookActionObjectProductAddAfter($params)
     {
         if (\boolval(Configuration::get('AS_REAL_TIME_INDEXATION'))) {
-            $this->hooks->putProductById($params['object']->id);
+            $objectId = $params['object']->id;
+            if (array_key_exists($objectId, $this->updates)) {
+                return;
+            }
+
+            $this->hooks->putProductById($objectId);
+            $this->updates[$objectId] = true;
         }
     }
 
@@ -387,7 +421,13 @@ class Apisearch extends Module
     public function hookActionObjectProductUpdateAfter($params)
     {
         if (\boolval(Configuration::get('AS_REAL_TIME_INDEXATION'))) {
-            $this->hooks->putProductById($params['object']->id);
+            $objectId = $params['object']->id;
+            if (array_key_exists($objectId, $this->updates)) {
+                return;
+            }
+
+            $this->hooks->putProductById($objectId);
+            $this->updates[$objectId] = true;
         }
     }
 
@@ -397,7 +437,35 @@ class Apisearch extends Module
     public function hookActionObjectProductDeleteBefore($params)
     {
         if (\boolval(Configuration::get('AS_REAL_TIME_INDEXATION'))) {
-            $this->hooks->deleteProductById($params['object']->id);
+            $objectId = $params['object']->id;
+            if (array_key_exists($objectId, $this->updates)) {
+                return;
+            }
+
+            $this->hooks->deleteProductById($objectId);
+            $this->updates[$objectId] = true;
+        }
+    }
+
+    /**
+     * @param $params
+     */
+    public function hookActionUpdateQuantity($params)
+    {
+        if (\boolval(Configuration::get('AS_REAL_TIME_INDEXATION'))) {
+            $idProduct = $params['id_product'];
+            if (array_key_exists($idProduct, $this->updates)) {
+                return;
+            }
+
+            $quantity = $params['quantity'];
+            $this->updates[$idProduct] = true;
+
+            if (Configuration::get('AS_INDEX_PRODUCT_NO_STOCK') || ($quantity > 0)) {
+                $this->hooks->putProductById($idProduct);
+            } else {
+                $this->hooks->deleteProductById($idProduct);
+            }
         }
     }
 
