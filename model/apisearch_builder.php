@@ -52,6 +52,8 @@ class ApisearchBuilder
             return $this->buildItemFromProduct($product, $langId, $version);
         }, $products));
 
+        $items = array_filter($items);
+
         if (!empty($items)) {
             $flushCallable($items);
         }
@@ -62,7 +64,7 @@ class ApisearchBuilder
      * @param int $langId
      * @param string $version
      *
-     * @return array
+     * @return array|false
      */
     public function buildItemFromProduct($product, $langId, $version)
     {
@@ -70,7 +72,6 @@ class ApisearchBuilder
         $productAvailableForOrder = $product['available_for_order'];
         $productOutOfStock = $product['out_of_stock'];
 
-        $product['available'] = $this->getAvailability($productId, $productAvailableForOrder, $productOutOfStock, $product['minimal_quantity']);
         $reference = $product['reference'];
         $ean13 = $product['ean13'];
         $upc = $product['upc'];
@@ -101,17 +102,34 @@ class ApisearchBuilder
         $features = array();
         $colors = [];
 
-        if (in_array($product['visibility'], array('both', 'search'))) {
-            $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
-            $available = false;
+        $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
+        $available = $this->getAvailability($productId, $productAvailableForOrder, $productOutOfStock, $product['minimal_quantity']);
 
+        foreach ($combinations as $combination) {
+
+            $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
+                ? $combination['attribute_color']
+                : null;
+
+            if (isset($combination['default_on'])) {
+                $id_product_attribute = $combination['id_product_attribute'];
+                $reference = empty($product['reference']) ? $combination['reference'] : $product['reference'];
+                $ean13 = empty($product['ean13']) ? $combination['ean13'] : $product['ean13'];
+                $upc = empty($product['upd']) ? $combination['upc'] : $product['upd'];
+                $minimal_quantity = $combination['minimal_quantity'];
+                $price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
+                $old_price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
+                $available = $this->getAvailability($productId, $productAvailableForOrder, $productOutOfStock, $combination['minimal_quantity'], $combination['id_product_attribute']);
+                $img = $combination['id_image'] ?? '';
+            }
+            if (!isset($attributes[$combination['group_name']]) || (isset($attributes[$combination['group_name']]) && !in_array($combination['attribute_name'], $attributes[$combination['group_name']]))) {
+                $attributes[$combination['group_name']][] = $combination['attribute_name'];
+            }
+        }
+
+        if (!$available) {
             foreach ($combinations as $combination) {
-
-                $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
-                    ? $combination['attribute_color']
-                    : null;
-
-                if (isset($combination['default_on'])) {
+                if ($this->getAvailability($product['id_product'], $productAvailableForOrder, $productOutOfStock, $combination['minimal_quantity'], $combination['id_product_attribute'])) {
                     $id_product_attribute = $combination['id_product_attribute'];
                     $reference = empty($product['reference']) ? $combination['reference'] : $product['reference'];
                     $ean13 = empty($product['ean13']) ? $combination['ean13'] : $product['ean13'];
@@ -119,38 +137,29 @@ class ApisearchBuilder
                     $minimal_quantity = $combination['minimal_quantity'];
                     $price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
                     $old_price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
-                    $available = $this->getAvailability($productId, $productAvailableForOrder, $productOutOfStock, $combination['minimal_quantity'], $combination['id_product_attribute']);
+                    $available = 1;
                     $img = $combination['id_image'] ?? '';
-                }
-                if (!isset($attributes[$combination['group_name']]) || (isset($attributes[$combination['group_name']]) && !in_array($combination['attribute_name'], $attributes[$combination['group_name']]))) {
-                    $attributes[$combination['group_name']][] = $combination['attribute_name'];
-                }
-            }
+                    $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
+                        ? $combination['attribute_color']
+                        : null;
 
-            if (!$available) {
-                foreach ($combinations as $combination) {
-                    if ($this->getAvailability($product['id_product'], $productAvailableForOrder, $productOutOfStock, $combination['minimal_quantity'], $combination['id_product_attribute'])) {
-                        $id_product_attribute = $combination['id_product_attribute'];
-                        $reference = empty($product['reference']) ? $combination['reference'] : $product['reference'];
-                        $ean13 = empty($product['ean13']) ? $combination['ean13'] : $product['ean13'];
-                        $upc = empty($product['upd']) ? $combination['upc'] : $product['upd'];
-                        $minimal_quantity = $combination['minimal_quantity'];
-                        $price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
-                        $old_price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
-                        $available = 1;
-                        $img = $combination['id_image'] ?? '';
-                        $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
-                            ? $combination['attribute_color']
-                            : null;
-
-                        break;
-                    }
+                    break;
                 }
             }
         }
 
+        if (!$available && !Configuration::get('AS_INDEX_PRODUCT_NO_STOCK')) {
+            return false;
+        }
+
         $link = (string)Context::getContext()->link->getProductLink($productId);
         $image = (string)Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
+
+        $frontFeatures = $product['front_features'];
+        $frontFeaturesKeyFixed = [];
+        foreach ($frontFeatures as $key => $value) {
+            $frontFeaturesKeyFixed[strtolower(str_replace([' '], ['_'], $key))] = $value;
+        }
 
         $itemAsArray = array(
             'uuid' => array(
@@ -174,13 +183,13 @@ class ApisearchBuilder
                 'quantity_discount' => \intval($old_price - $price),
                 'old_price' => \round($old_price, 2),
             ),
-            'indexed_metadata' => array(
+            'indexed_metadata' => array_merge(array(
                 'as_version' => \intval($version),
                 'price' => \round($price, 2),
                 'categories' => $categoriesName,
                 'available' => \boolval($available),
                 'with_discount' => \boolval($old_price - $price > 0),
-            ),
+            ), $frontFeaturesKeyFixed),
             'searchable_metadata' => array(
                 'name' => \strval($product['name']),
                 'description' => \strval($product['description']),
@@ -207,7 +216,6 @@ class ApisearchBuilder
             }, $colors);
             $colors = array_values($colors);
             $itemAsArray['indexed_metadata']['color_hex'] = $colors;
-            var_dump($colors);
         }
 
         #

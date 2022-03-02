@@ -27,7 +27,7 @@ class ApisearchHooks
         $product = new Product($productId);
         if (Validate::isLoadedObject($product)) {
 
-            $product->active
+            $product->active && in_array($product->visibility, ['search', 'both'])
                 ? $this->doPutProductById($productId)
                 : $this->doDeleteProductById($productId);
         }
