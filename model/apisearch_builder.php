@@ -161,8 +161,10 @@ class ApisearchBuilder
 
         $frontFeatures = $product['front_features'];
         $frontFeaturesKeyFixed = [];
-        foreach ($frontFeatures as $key => $value) {
-            $frontFeaturesKeyFixed[strtolower(str_replace([' '], ['_'], $key))] = $value;
+        if (is_array($frontFeatures)) {
+            foreach ($frontFeatures as $key => $value) {
+                $frontFeaturesKeyFixed[strtolower(str_replace([' '], ['_'], $key))] = $value;
+            }
         }
 
         $itemAsArray = array(

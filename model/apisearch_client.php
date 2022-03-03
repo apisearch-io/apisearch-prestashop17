@@ -167,6 +167,38 @@ class ApisearchClient
             $url .= "&$parameterKey=$parameterValue";
         }
 
+        $useCurl = function_exists('curl_version');
+        if ($useCurl) {
+            $parts = $this->requestWithCurl($url, $method, $body);
+        } else {
+            $parts = $this->requestWithFileGetContents($url, $method, $body);
+        }
+
+        $data = $parts[0];
+        $code = $parts[1];
+
+        if ('2' !== substr($code, 0, 1)) {
+            $dataArray = json_decode($data, true);
+            throw new Exception($dataArray['message'] ?? '', $dataArray['code'] ?? 500);
+        }
+
+        return json_decode($data, true);
+    }
+
+    /**
+     * @param string $url
+     * @param string $method
+     * @param array $body
+     *
+     * @return array
+     */
+    private function requestWithFileGetContents(
+        $url,
+        $method,
+        $body
+    )
+    {
+        syslog(0, 'file_get_contents');
         if ('GET' !== $method) {
             $data = json_encode($body);
             $context = stream_context_create([
@@ -186,14 +218,9 @@ class ApisearchClient
             $data = file_get_contents($url);
         }
 
-        $code = $this->parseResponseStatusCode($http_response_header['0']);
+        $code = $this->parseFileGetContentsResponseStatusCode($http_response_header['0']);
 
-        if ('2' !== substr($code, 0, 1)) {
-            $dataArray = json_decode($data, true);
-            throw new Exception($dataArray['message'] ?? '', $dataArray['code'] ?? 500);
-        }
-
-        return json_decode($data, true);
+        return array($data, $code);
     }
 
     /**
@@ -203,7 +230,7 @@ class ApisearchClient
      *
      * @return int
      */
-    private function parseResponseStatusCode($header)
+    private function parseFileGetContentsResponseStatusCode($header)
     {
         try {
             list(, $code, $status) = explode(' ', $header, 3);
@@ -214,5 +241,43 @@ class ApisearchClient
         }
 
         return null;
+    }
+
+    /**
+     * @param string $url
+     * @param string $method
+     * @param array $body
+     *
+     * @return array
+     */
+    private function requestWithCurl(
+        $url,
+        $method,
+        $body
+    )
+    {
+        syslog(0, 'cURL');
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+
+        if ('GET' !== $method) {
+            $bodyAsJson = json_encode($body);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $bodyAsJson);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                "Content-type: application/json",
+                "Accept: application/json",
+                "Connection: close",
+                "Content-length: " . strlen($bodyAsJson),
+            ));
+        }
+
+        $result = curl_exec($ch);
+
+        return array(
+            $result,
+            curl_getinfo($ch, CURLINFO_HTTP_CODE)
+        );
     }
 }

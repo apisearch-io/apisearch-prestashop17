@@ -25,6 +25,7 @@
  *  International Registered Trademark & Property of PrestaShop SA
  */
 set_time_limit(1800);
+
 require_once(dirname(__FILE__) . '../../../config/config.inc.php');
 require_once(dirname(__FILE__) . '../../../init.php');
 
