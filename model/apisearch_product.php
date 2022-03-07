@@ -89,6 +89,8 @@ class ApisearchProduct
 
         foreach ($products as $groupsProduct) {
             $productId = $groupsProduct['id_product'];
+
+
             if (array_key_exists($productId, $productsIndexedById)) {
                 $productsIndexedById[$productId]['categories_id'] = array_filter(explode(',', $groupsProduct['cp_id_categories']));
                 $productsIndexedById[$productId]['tags'] = array_filter(explode(',', $groupsProduct['tag_names']));
@@ -102,7 +104,10 @@ class ApisearchProduct
                     foreach ($featuresLang as $featureLang) {
                         $parts = explode('~~', $featureLang, 2);
                         if (count($parts) === 2) {
-                            $featuresLangIndexed[$parts[0]] = $parts[1];
+                            if (!array_key_exists($parts[0], $featuresLangIndexed)) {
+                                $featuresLangIndexed[$parts[0]] = [];
+                            }
+                            $featuresLangIndexed[$parts[0]][] = $parts[1];
                         }
                     }
 
@@ -118,10 +123,16 @@ class ApisearchProduct
                     $productsIndexedById[$productId]['front_features'] = [];
                     foreach ($features as $feature) {
                         if (count($feature) === 2) {
-                            $featureId = $featuresLangIndexed[$feature[0]] ?? null;
-                            $featureValue = $featuresValueIndexed[$feature[1]] ?? null;
-                            if ($featureId && $featuresValue) {
-                                $productsIndexedById[$productId]['front_features'][$featureId] = $featureValue;
+                            $featureIds = $featuresLangIndexed[$feature[0]] ?? [];
+                            foreach ($featureIds as $featureId) {
+                                $featureValue = $featuresValueIndexed[$feature[1]] ?? null;
+                                if ($featureId && $featuresValue) {
+                                    if (!array_key_exists($featureId, $productsIndexedById[$productId]['front_features'])) {
+                                        $productsIndexedById[$productId]['front_features'][$featureId] = [];
+                                    }
+
+                                    $productsIndexedById[$productId]['front_features'][$featureId][] = $featureValue;
+                                }
                             }
                         }
                     }

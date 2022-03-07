@@ -420,6 +420,9 @@ class Apisearch extends Module
      */
     public function hookActionObjectProductUpdateAfter($params)
     {
+        // The Update Quantity hook already does this workok
+        return;
+
         if (\boolval(Configuration::get('AS_REAL_TIME_INDEXATION'))) {
             $objectId = $params['object']->id;
             if (array_key_exists($objectId, $this->updates)) {
@@ -455,6 +458,11 @@ class Apisearch extends Module
         if (\boolval(Configuration::get('AS_REAL_TIME_INDEXATION'))) {
             $idProduct = $params['id_product'];
             if (array_key_exists($idProduct, $this->updates)) {
+                return;
+            }
+
+            $idProductAttribute = $params['id_product_attribute'];
+            if ($idProductAttribute > 0) {
                 return;
             }
 
