@@ -273,11 +273,19 @@ class ApisearchClient
             ));
         }
 
-        $result = curl_exec($ch);
+        $result = false;
+        $code = null;
+
+        try {
+            $result = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        } catch (\Throwable $exception) {
+            // Silent exception
+        }
 
         return array(
             $result,
-            curl_getinfo($ch, CURLINFO_HTTP_CODE)
+            $code
         );
     }
 }

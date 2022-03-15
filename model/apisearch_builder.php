@@ -81,6 +81,7 @@ class ApisearchBuilder
         $img = $product['id_image'];
         $price = Product::getPriceStatic($productId, true, null, 2);
         $old_price = Product::getPriceStatic($productId, true, null, 2, null, false, false);
+        $hasCombinations = \intval($product['cache_default_attribute'] ?? 0) > 0;
 
         $categoriesName = array();
         foreach ($product['categories_id'] as $categoryId) {
@@ -101,6 +102,7 @@ class ApisearchBuilder
         $available = $this->getAvailability($productId, $productAvailableForOrder, $productOutOfStock, $product['minimal_quantity']);
         $combinationImg = null;
 
+        if ($hasCombinations) {
         foreach ($combinations as $combination) {
 
             $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
@@ -143,6 +145,7 @@ class ApisearchBuilder
                 }
             }
         }
+        }
 
         if (!$available && !$this->indexProductNoStock) {
             return false;
@@ -159,7 +162,7 @@ class ApisearchBuilder
         $link = (string)Context::getContext()->link->getProductLink($productId);
         $image = (string)Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $combinationImg ?? $img, 'home_default');
 
-        $frontFeatures = $product['front_features'];
+        $frontFeatures = $product['front_features'] ?? null;
         $frontFeaturesKeyFixed = [];
         if (is_array($frontFeatures)) {
             foreach ($frontFeatures as $key => $value) {
@@ -195,6 +198,7 @@ class ApisearchBuilder
                 'categories' => $categoriesName,
                 'available' => \boolval($available),
                 'with_discount' => \boolval($old_price - $price > 0),
+                'with_variants' => $hasCombinations
             ), $frontFeaturesKeyFixed),
             'searchable_metadata' => array(
                 'name' => \strval($product['name']),

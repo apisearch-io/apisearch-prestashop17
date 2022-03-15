@@ -70,9 +70,9 @@ class ApisearchProduct
             SELECT p.id_product, 
                 group_concat(distinct(cp.id_category)) as cp_id_categories, 
                 group_concat(distinct(t.name)) as tag_names,
-                group_concat(fp.id_feature, '~~', fp.id_feature_value SEPARATOR '>><<') as features,
-                group_concat(fl.id_feature, '~~',  fl.name SEPARATOR '>><<') as features_lang,
-                group_concat(fvl.id_feature_value, '~~',  fvl.value SEPARATOR '>><<') as features_value
+                group_concat(distinct fp.id_feature, '~~', fp.id_feature_value SEPARATOR '|') as features,
+                group_concat(distinct fl.id_feature, '~~',  fl.name SEPARATOR '|') as features_lang,
+                group_concat(distinct fvl.id_feature_value, '~~',  fvl.value SEPARATOR '|') as features_value
             FROM {$prefix}product p
                 LEFT JOIN {$prefix}product_tag pt ON (pt.id_product = p.id_product)
                 LEFT JOIN {$prefix}tag t ON t.id_tag = `pt`.id_tag
@@ -96,11 +96,11 @@ class ApisearchProduct
                 $productsIndexedById[$productId]['tags'] = array_filter(explode(',', $groupsProduct['tag_names']));
                 $features = array_map(function(string $value) {
                     return explode('~~', $value, 2);
-                }, array_unique(explode('>><<', $groupsProduct['features'])));
+                }, array_unique(explode('|', $groupsProduct['features'])));
 
                 if (!empty($features) && $features[0] !== [""]) {
                     $featuresLangIndexed = [];
-                    $featuresLang = array_unique(explode('>><<', $groupsProduct['features_lang']));
+                    $featuresLang = array_unique(explode('|', $groupsProduct['features_lang']));
                     foreach ($featuresLang as $featureLang) {
                         $parts = explode('~~', $featureLang, 2);
                         if (count($parts) === 2) {
@@ -112,7 +112,7 @@ class ApisearchProduct
                     }
 
                     $featuresValueIndexed = [];
-                    $featuresValue = array_unique(explode('>><<', $groupsProduct['features_value']));
+                    $featuresValue = array_unique(explode('|', $groupsProduct['features_value']));
                     foreach ($featuresValue as $featureValue) {
                         $parts = explode('~~', $featureValue, 2);
                         if (count($parts) === 2) {
