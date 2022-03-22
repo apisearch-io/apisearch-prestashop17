@@ -1,7 +1,6 @@
 <?php
 
-require_once __DIR__ . '/apisearch_manufacturer.php';
-require_once __DIR__ . '/apisearch_supplier.php';
+namespace Apisearch\Model;
 
 class ApisearchProduct
 {
@@ -28,7 +27,7 @@ class ApisearchProduct
             ORDER BY id_product ASC
             LIMIT $start,$limit";
 
-        return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        return \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
     }
 
     /**
@@ -42,7 +41,7 @@ class ApisearchProduct
         $prefix = _DB_PREFIX_;
         $productIdsAsString = implode(',', $productsId);
         $sql = "
-            SELECT p.*, ps.advanced_stock_management, im.id_image, pl.*
+            SELECT p.*, ps.advanced_stock_management, im.id_image, pl.*, psale.quantity as sales
             FROM {$prefix}product p
                 LEFT JOIN {$prefix}product_lang `pl` ON p.`id_product` = pl.`id_product` AND pl.`id_lang` = $langId
                 LEFT JOIN {$prefix}product_shop `c` ON p.`id_product` = c.`id_product` AND c.`id_shop` = $shopId
@@ -50,16 +49,15 @@ class ApisearchProduct
                 LEFT JOIN {$prefix}image_shop im ON im.id_product = p.id_product AND im.cover = 1
                 LEFT JOIN {$prefix}image_lang iml ON im.id_image = iml.id_image AND iml.id_lang = $langId AND im.`id_shop` = $shopId
                 INNER JOIN {$prefix}product_shop product_shop ON (product_shop.id_product = p.id_product AND product_shop.id_shop = $shopId)
+                LEFT JOIN {$prefix}product_sale psale ON (psale.id_product = p.id_product)
             WHERE p.id_product IN($productIdsAsString);
         ";
 
-        $products = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $products = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
         $productsIndexedById = [];
         $manufacturers = ApisearchManufacturer::getManufacturers(array_column($products, 'id_manufacturer'));
-        $suppliers = ApisearchManufacturer::getManufacturers(array_column($products, 'id_supplier'));
         foreach ($products as $product) {
             $product['manufacturer'] = $manufacturers[$product['id_manufacturer']] ?? '';
-            $product['supplier'] = $suppliers[$product['id_supplier']] ?? '';
             $product['name'] = \strip_tags($product['name'] ?? '');
             $product['description'] = \strip_tags($product['description'] ?? '');
             $product['description_short'] = \strip_tags($product['description_short'] ?? '');
@@ -85,7 +83,7 @@ class ApisearchProduct
             GROUP BY p.id_product
         ";
 
-        $products = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $products = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
 
         foreach ($products as $groupsProduct) {
             $productId = $groupsProduct['id_product'];
@@ -153,7 +151,7 @@ class ApisearchProduct
      */
     public static function getAttributeCombinations($productId, $id_lang, $groupByIdAttributeGroup = true)
     {
-        if (!Combination::isFeatureActive()) {
+        if (!\Combination::isFeatureActive()) {
             return [];
         }
 
@@ -167,7 +165,7 @@ class ApisearchProduct
                 al.`name` AS attribute_name,
                 a.`id_attribute`,
                 a.`color` AS attribute_color,
-                pai.id_product_attribute,
+                pai.id_product_attribute as id_product_attribute_image,
                 i.id_image
             FROM {$prefix}product_attribute pa
             LEFT JOIN `{$prefix}product_attribute_combination` pac ON pac.`id_product_attribute` = pa.`id_product_attribute`
@@ -178,14 +176,13 @@ class ApisearchProduct
             LEFT JOIN `{$prefix}product_attribute_image` pai ON pai.id_product_attribute = pa.id_product_attribute
             LEFT JOIN `{$prefix}image_lang` il ON (il.`id_image` = pai.`id_image`)
             LEFT JOIN `{$prefix}image` i ON (i.`id_image` = pai.`id_image`)
-            WHERE pa.`id_product` = $productId
-            GROUP BY pa.id_product_attribute" . ($groupByIdAttributeGroup ? ',ag.`id_attribute_group`' : '');
+            WHERE pa.`id_product` = $productId";
 
-        $res = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $res = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
 
-        //Get quantity of each variations
+        //Get quantity of each variation
         foreach ($res as $key => $row) {
-            $res[$key]['quantity'] = StockAvailable::getQuantityAvailableByProduct($row['id_product'], $row['id_product_attribute']);
+            $res[$key]['quantity'] = \StockAvailable::getQuantityAvailableByProduct(\intval($row['id_product']), \intval($row['id_product_attribute']));
         }
 
         return $res;

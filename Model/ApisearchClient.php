@@ -1,5 +1,7 @@
 <?php
 
+namespace Apisearch\Model;
+
 /*
  * This file is part of the Apisearch Server
  *
@@ -58,7 +60,7 @@ class ApisearchClient
     /**
      * Reset index.
      *
-     * @throws Exception
+     * @throws \Exception
      */
     public function resetIndex()
     {
@@ -135,7 +137,7 @@ class ApisearchClient
      *
      * @return string
      *
-     * @throws Exception
+     * @throws \Exception
      */
     private function request(
         $endpoint,
@@ -179,7 +181,7 @@ class ApisearchClient
 
         if ('2' !== substr($code, 0, 1)) {
             $dataArray = json_decode($data, true);
-            throw new Exception($dataArray['message'] ?? '', $dataArray['code'] ?? 500);
+            throw new \Exception($dataArray['message'] ?? '', $dataArray['code'] ?? 500);
         }
 
         return json_decode($data, true);
@@ -236,7 +238,7 @@ class ApisearchClient
             list(, $code, $status) = explode(' ', $header, 3);
 
             return (int)$code;
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             // Silent pass
         }
 

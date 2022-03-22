@@ -1,0 +1,17 @@
+{
+    "name": "apisearch-io/prestashop17-module",
+    "autoload": {
+        "psr-4": {
+            "Apisearch\\": "."
+        },
+        "classmap": [
+            "apisearch.php"
+        ],
+        "exclude-from-classmap": []
+    },
+    "config": {
+        "preferred-install": "dist",
+        "prepend-autoloader": false
+    },
+    "type": "prestashop-module"
+}

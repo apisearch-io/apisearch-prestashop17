@@ -1,7 +1,6 @@
 <?php
 
-require_once __DIR__ . '/apisearch_defaults.php';
-require_once __DIR__ . '/apisearch_product.php';
+namespace Apisearch\Model;
 
 class ApisearchBuilder
 {
@@ -13,9 +12,9 @@ class ApisearchBuilder
      */
     public function __construct()
     {
-        $this->avoidProductsWithoutImage = !\boolval(Configuration::get('AS_INDEX_PRODUCTS_WITHOUT_IMAGE'));
-        $this->indexProductPurchaseCount = \boolval(Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT'));
-        $this->indexProductNoStock = \boolval(Configuration::get('AS_INDEX_PRODUCT_NO_STOCK'));
+        $this->avoidProductsWithoutImage = !\boolval(\Configuration::get('AS_INDEX_PRODUCTS_WITHOUT_IMAGE'));
+        $this->indexProductPurchaseCount = \boolval(\Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT'));
+        $this->indexProductNoStock = \boolval(\Configuration::get('AS_INDEX_PRODUCT_NO_STOCK'));
     }
 
     /**
@@ -30,7 +29,7 @@ class ApisearchBuilder
     public function buildItems($productsId, $langId, $version, $batch, $shopId, Callable $flushCallable)
     {
         if (!isset($langId)) {
-            $langId = Context::getContext()->language->id;
+            $langId = \Context::getContext()->language->id;
         }
 
         $chunks = array_chunk($productsId, $batch);
@@ -62,6 +61,37 @@ class ApisearchBuilder
     }
 
     /**
+     * @param int $productId
+     * @param          $langId
+     * @param string $version
+     * @param callable $flushCallable
+     *
+     * @return array
+     *
+     * @throw \Exception
+     */
+    public function buildItem($productId, $langId, $version, $shopId, Callable $flushCallable)
+    {
+        if (!isset($langId)) {
+            $langId = \Context::getContext()->language->id;
+        }
+
+        $products = ApisearchProduct::getFullProductsById([$productId], $langId, $shopId);
+        if (empty($products)) {
+            throw new InvalidProductException();
+        }
+
+        $product = reset($products);
+        $item = $this->buildItemFromProduct($product, $langId, $version);
+
+        if (empty($item)) {
+            throw new InvalidProductException();
+        }
+
+        $flushCallable($item);
+    }
+
+    /**
      * @param array $product
      * @param int $langId
      * @param string $version
@@ -70,81 +100,74 @@ class ApisearchBuilder
      */
     public function buildItemFromProduct($product, $langId, $version)
     {
+        if (!$product['active'] || !in_array($product['visibility'], ['search', 'both'])) {
+            return false;
+        }
+
         $productId = $product['id_product'];
         $productAvailableForOrder = $product['available_for_order'];
-        $productOutOfStock = $product['out_of_stock'];
+        $outOfStock = $product['out_of_stock'];
 
         $reference = $product['reference'];
         $ean13 = $product['ean13'];
         $upc = $product['upc'];
-        $minimal_quantity = $product['minimal_quantity'];
         $img = $product['id_image'];
-        $price = Product::getPriceStatic($productId, true, null, 2);
-        $old_price = Product::getPriceStatic($productId, true, null, 2, null, false, false);
         $hasCombinations = \intval($product['cache_default_attribute'] ?? 0) > 0;
+        $idProductAttribute = null;
 
         $categoriesName = array();
         foreach ($product['categories_id'] as $categoryId) {
-            if ($categoryId == Configuration::get('PS_ROOT_CATEGORY') || $categoryId == Configuration::get('PS_HOME_CATEGORY'))
+            if ($categoryId == \Configuration::get('PS_ROOT_CATEGORY') || $categoryId == \Configuration::get('PS_HOME_CATEGORY'))
                 continue;
 
-            $category = new Category($categoryId, $langId);
-            if (Validate::isLoadedObject($category)) {
+            $category = new \Category($categoryId, $langId);
+            if (\Validate::isLoadedObject($category)) {
                 $categoriesName[] = $category->name;
             }
         }
 
         $attributes = array();
-        $features = array();
         $colors = [];
 
         $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
-        $available = $this->getAvailability($productId, $productAvailableForOrder, $productOutOfStock, $product['minimal_quantity']);
         $combinationImg = null;
+        $available = false;
 
         if ($hasCombinations) {
-        foreach ($combinations as $combination) {
 
+            $quantity = 0;
+
+        foreach ($combinations as $combination) {
+            $quantity += \intval(($combination['quantity'] ?? 0));
             $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
                 ? $combination['attribute_color']
                 : null;
 
             if (isset($combination['default_on'])) {
-                $id_product_attribute = $combination['id_product_attribute'];
+                $idProductAttribute = $combination['id_product_attribute'];
                 $reference = empty($product['reference']) ? $combination['reference'] : $product['reference'];
                 $ean13 = empty($product['ean13']) ? $combination['ean13'] : $product['ean13'];
                 $upc = empty($product['upd']) ? $combination['upc'] : $product['upd'];
-                $minimal_quantity = $combination['minimal_quantity'];
-                $price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
-                $old_price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
-                $available = $this->getAvailability($productId, $productAvailableForOrder, $productOutOfStock, $combination['minimal_quantity'], $combination['id_product_attribute']);
-                $combinationImg = $combination['id_image'] ?? '';
+                $outOfStock = $combination['out_of_stock'];
+                $img = $combination['id_image'] ?? $img;
             }
+
             if (!isset($attributes[$combination['group_name']]) || (isset($attributes[$combination['group_name']]) && !in_array($combination['attribute_name'], $attributes[$combination['group_name']]))) {
                 $attributes[$combination['group_name']][] = $combination['attribute_name'];
             }
         }
 
-        if (!$available) {
+        // Only if we have stock, we are going to check availability
+        if ($quantity > 0) {
             foreach ($combinations as $combination) {
-                if ($this->getAvailability($product['id_product'], $productAvailableForOrder, $productOutOfStock, $combination['minimal_quantity'], $combination['id_product_attribute'])) {
-                    $id_product_attribute = $combination['id_product_attribute'];
-                    $reference = empty($product['reference']) ? $combination['reference'] : $product['reference'];
-                    $ean13 = empty($product['ean13']) ? $combination['ean13'] : $product['ean13'];
-                    $upc = empty($product['upd']) ? $combination['upc'] : $product['upd'];
-                    $minimal_quantity = $combination['minimal_quantity'];
-                    $price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
-                    $old_price = Product::getPriceStatic($productId, true, $combination['id_product_attribute'], Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
-                    $available = 1;
-                    $combinationImg = $combination['id_image'] ?? '';
-                    $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
-                        ? $combination['attribute_color']
-                        : null;
-
-                    break;
-                }
+                $minimalQuantity = $combination['minimal_quantity'];
+                $idProductAttribute = $combination['id_product_attribute'];
+                $available = $available || $this->getAvailability($productId, $productAvailableForOrder, $outOfStock, $minimalQuantity, $idProductAttribute);
             }
         }
+
+        } else {
+            $available = $this->getAvailability($productId, $productAvailableForOrder, $product['out_of_stock'], $product['minimal_quantity']);
         }
 
         if (!$available && !$this->indexProductNoStock) {
@@ -159,8 +182,12 @@ class ApisearchBuilder
             return false;
         }
 
-        $link = (string)Context::getContext()->link->getProductLink($productId);
-        $image = (string)Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $combinationImg ?? $img, 'home_default');
+        $link = \Context::getContext()->link->getProductLink($productId);
+        $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
+        $price = \Product::getPriceStatic($productId, true, $idProductAttribute, \Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
+        $price = \round($price, 2);
+        $oldPrice = \Product::getPriceStatic($productId, true, $idProductAttribute, \Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
+        $oldPrice = \round($oldPrice, 2);
 
         $frontFeatures = $product['front_features'] ?? null;
         $frontFeaturesKeyFixed = [];
@@ -176,37 +203,29 @@ class ApisearchBuilder
                 'type' => 'product'
             ),
             'metadata' => array(
-                'id_product' => \strval($productId),
-                'id_product_attribute' => \strval(isset($id_product_attribute) ? $id_product_attribute : 0),
                 'name' => \strval($product['name']),
-                'description' => \strval($product['description']),
-                'description_short' => \strval($product['description_short']),
                 'reference' => \strval($reference),
                 'ean' => \strval($ean13),
                 'upc' => \strval($upc),
-                'show_price' => \boolval(($productAvailableForOrder || $product['show_price'])),
-                'link' => \strval($link),
-                'img' => \strval($image),
-                'with_discount' => \strval(($old_price - $price > 0)),
-                'minimal_quantity' => \intval($minimal_quantity),
-                'quantity_discount' => \intval($old_price - $price),
-                'old_price' => \round($old_price, 2),
+                'show_price' => ($productAvailableForOrder || $product['show_price']), // Deprecated
+                'link' => $link, // Deprecated
+                'url' => $link,
+                'img' => $image,
+                'old_price' => $oldPrice,
             ),
             'indexed_metadata' => array_merge(array(
                 'as_version' => \intval($version),
                 'price' => \round($price, 2),
                 'categories' => $categoriesName,
-                'available' => \boolval($available),
-                'with_discount' => \boolval($old_price - $price > 0),
+                'available' => $available,
+                'with_discount' => $oldPrice - $price > 0,
                 'with_variants' => $hasCombinations
             ), $frontFeaturesKeyFixed),
             'searchable_metadata' => array(
                 'name' => \strval($product['name']),
-                'description' => \strval($product['description']),
-                'description_short' => \strval($product['description_short']),
             ),
             'suggest' => array(
-                'name' => \strval($product['name']),
+                \strval($product['name']),
             ),
             'exact_matching_metadata' => array(
                 \strval($productId),
@@ -234,23 +253,20 @@ class ApisearchBuilder
         if (!empty($product['manufacturer'])) {
             $itemAsArray['indexed_metadata']['brand'] = \strval($product['manufacturer']['name']);
             $itemAsArray['searchable_metadata']['brand'] = \strval($product['manufacturer']['name']);
-        }
-        
-        if (!empty($product['supplier'])) {
+            $itemAsArray['suggest'][] = \strval($product['manufacturer']['name']);
+        } elseif (!empty($product['supplier'])) {
             $itemAsArray['indexed_metadata']['brand'] = \strval($product['supplier']['name']);
             $itemAsArray['searchable_metadata']['brand'] = \strval($product['supplier']['name']);
+            $itemAsArray['suggest'][] = \strval($product['supplier']['name']);
         }
 
         foreach ($attributes as $attributeName => $attrValues) {
-            $itemAsArray['indexed_metadata'][Tools::link_rewrite($attributeName)] = (array)$attrValues;
-        }
-
-        foreach ($features as $featureName => $featValues) {
-            $itemAsArray['indexed_metadata'][Tools::link_rewrite($featureName)] = (array)$featValues;
+            $itemAsArray['indexed_metadata'][strtolower(str_replace([' '], ['_'], $attributeName))] = (array)$attrValues;
         }
 
         if ($this->indexProductPurchaseCount) {
-            $itemAsArray['indexed_metadata']['quantity_sold'] = \intval($this->getSold($productId));
+            $itemAsArray['indexed_metadata']['quantity_sold'] = \intval($product['sales']); // deprecated
+            $itemAsArray['indexed_metadata']['sales'] = \intval($product['sales']);
         }
 
         #
@@ -280,11 +296,11 @@ class ApisearchBuilder
     {
         $available = false;
         if ($available_for_order) {
-            if (Configuration::get('PS_STOCK_MANAGEMENT')) {
-                if ((Configuration::get('PS_ORDER_OUT_OF_STOCK') && $out_of_stock == 2) || $out_of_stock == 1) {
+            if (\Configuration::get('PS_STOCK_MANAGEMENT')) {
+                if ((\Configuration::get('PS_ORDER_OUT_OF_STOCK') && $out_of_stock == 2) || $out_of_stock == 1) {
                     $available = true;
                 } else {
-                    if (Product::getRealQuantity($id, $combination_id) >= $minimal_quantity) {
+                    if (\Product::getRealQuantity($id, $combination_id) >= $minimal_quantity) {
                         $available = true;
                     }
                 }
@@ -294,26 +310,5 @@ class ApisearchBuilder
         }
 
         return $available;
-    }
-
-    /**
-     * @param $productId
-     *
-     * @return mixed
-     */
-    public function getSold($productId)
-    {
-        $sql = '
-            SELECT COUNT(od.product_quantity - od.product_quantity_refunded - od.product_quantity_return - od.product_quantity_reinjected)
-            FROM ' . _DB_PREFIX_ . 'order_detail od
-            LEFT JOIN ' . _DB_PREFIX_ . 'orders o ON (o.id_order = od.id_order)
-            LEFT JOIN ' . _DB_PREFIX_ . 'order_state os ON (os.id_order_state = o.current_state)
-            WHERE od.product_id = ' . $productId . '
-            AND o.valid = 1
-            AND os.logable = 1
-            AND os.paid = 1'
-        ;
-
-        return Db::getInstance()->getValue($sql);
     }
 }

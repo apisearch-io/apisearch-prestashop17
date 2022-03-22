@@ -1,5 +1,7 @@
 <?php
 
+namespace Apisearch\Model;
+
 class ApisearchManufacturer
 {
     private static $manufacturers = array();
@@ -37,7 +39,7 @@ class ApisearchManufacturer
             FROM `{$prefix}manufacturer`
             WHERE `id_manufacturer` in ($missingManufacturersIdAsString)";
 
-        $manufacturers = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $manufacturers = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
         foreach ($manufacturers as $manufacturer) {
             self::$manufacturers[$manufacturer['id_manufacturer']] = $manufacturer['active'] === 1
                 ? null

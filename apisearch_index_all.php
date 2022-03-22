@@ -27,10 +27,9 @@
 include_once dirname(__FILE__) . '/../../config/config.inc.php';
 include_once dirname(__FILE__) . '/../../init.php';
 
-require_once __DIR__ . '/model/apisearch_exporter.php';
-require_once __DIR__ . '/model/apisearch_builder.php';
-require_once __DIR__ . '/model/apisearch_connection.php';
-require_once __DIR__ . '/apisearch.php';
+use Apisearch\Model\ApisearchExporter;
+use Apisearch\Model\ApisearchConnection;
+use Apisearch\Model\ApisearchBuilder;
 
 $apisearch = new Apisearch();
 $exporter = new ApisearchExporter(

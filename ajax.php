@@ -39,11 +39,12 @@ if (Tools::getIsset('method') && Tools::getIsset('ajax')) {
     }
 }
 
+use Apisearch\Model\ApisearchExporter;
+use Apisearch\Model\ApisearchConnection;
+use Apisearch\Model\ApisearchBuilder;
+
 function syncProducts()
 {
-    require_once __DIR__ . '/model/apisearch_exporter.php';
-    require_once __DIR__ . '/model/apisearch_builder.php';
-    require_once __DIR__ . '/model/apisearch_connection.php';
     require_once __DIR__ . '/apisearch.php';
 
     $exporter = new ApisearchExporter(

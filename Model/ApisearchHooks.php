@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/apisearch_defaults.php';
+namespace Apisearch\Model;
 
 class ApisearchHooks
 {
@@ -18,18 +18,13 @@ class ApisearchHooks
     }
 
     /**
-     * @param Apisearch
-     *
      * @param $productId
      */
     public function putProductById($productId)
     {
-        $product = new Product($productId);
-        if (Validate::isLoadedObject($product)) {
-
-            $product->active && in_array($product->visibility, ['search', 'both'])
-                ? $this->doPutProductById($productId)
-                : $this->doDeleteProductById($productId);
+        $product = new \Product($productId);
+        if (\Validate::isLoadedObject($product)) {
+            $this->doPutProductById($productId);
         }
     }
 
@@ -38,8 +33,8 @@ class ApisearchHooks
      */
     public function deleteProductById($productId)
     {
-        $product = new Product($productId);
-        if (Validate::isLoadedObject($product)) {
+        $product = new \Product($productId);
+        if (\Validate::isLoadedObject($product)) {
             $this->doDeleteProductById($productId);
         }
     }
@@ -50,8 +45,8 @@ class ApisearchHooks
     private function doPutProductById($productId)
     {
         $indices = array();
-        foreach (Context::getContext()->language->getLanguages(true, Context::getContext()->shop->id) as $lang) {
-            $indexId = Configuration::get('AS_INDEX', $lang['id_lang']);
+        foreach (\Context::getContext()->language->getLanguages(true, \Context::getContext()->shop->id) as $lang) {
+            $indexId = \Configuration::get('AS_INDEX', $lang['id_lang']);
             if (in_array($indexId, $indices)) {
                 continue;
             }
@@ -59,18 +54,22 @@ class ApisearchHooks
             $indices[] = $indexId;
             $apisearchClient = $this->connection->getConnectionByLanguageId($lang['id_lang']);
             if (false !== $apisearchClient) {
-                $item = $this->builder->buildItems(
-                    [$productId],
-                    $lang['id_lang'],
-                    '',
-                    100,
-                    Context::getContext()->shop->id,
-                    function(array $items) use ($apisearchClient) {
-                        $apisearchClient->putItems($items);
-                    }
-                );
-                if (!empty($item)) {
-                    $apisearchClient->putItems([$item]);
+
+                try {
+                    $this->builder->buildItem(
+                        $productId,
+                        $lang['id_lang'],
+                        '',
+                        \Context::getContext()->shop->id,
+                    function(array $item) use ($apisearchClient) {
+                        $apisearchClient->putItems([$item]);
+                    });
+                } catch (InvalidProductException $_) {
+                    syslog(0, $_->getMessage());
+                    $apisearchClient->deleteItems([[
+                        'id' => $productId,
+                        'type' => 'product'
+                    ]]);
                 }
             }
         }
@@ -82,8 +81,8 @@ class ApisearchHooks
     private function doDeleteProductById($productId)
     {
         $indices = array();
-        foreach (Context::getContext()->language->getLanguages(true, Context::getContext()->shop->id) as $lang) {
-            $indexId = Configuration::get('AS_INDEX', $lang['id_lang']);
+        foreach (\Context::getContext()->language->getLanguages(true, \Context::getContext()->shop->id) as $lang) {
+            $indexId = \Configuration::get('AS_INDEX', $lang['id_lang']);
             if (in_array($indexId, $indices)) {
                 continue;
             }

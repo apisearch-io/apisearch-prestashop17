@@ -26,18 +26,24 @@
  */
 set_time_limit(1800);
 
-require_once(dirname(__FILE__) . '../../../config/config.inc.php');
-require_once(dirname(__FILE__) . '../../../init.php');
+    require_once(dirname(__FILE__) . '../../../config/config.inc.php');
+    require_once(dirname(__FILE__) . '../../../init.php');
+    require_once __DIR__.'/vendor/autoload.php';
 
-createFeed();
+    use Apisearch\Model\ApisearchExporter;
+    use Apisearch\Model\ApisearchConnection;
+    use Apisearch\Model\ApisearchBuilder;
+
+    require_once __DIR__ . '/apisearch.php';
+
+try {
+    createFeed();
+} catch (\Throwable $exception) {
+    syslog(0, $exception->getMessage());
+}
 
 function createFeed()
 {
-    require_once __DIR__ . '/model/apisearch_exporter.php';
-    require_once __DIR__ . '/model/apisearch_builder.php';
-    require_once __DIR__ . '/model/apisearch_connection.php';
-    require_once __DIR__ . '/apisearch.php';
-
     $exporter = new ApisearchExporter(
         new ApisearchBuilder(),
         new ApisearchConnection()

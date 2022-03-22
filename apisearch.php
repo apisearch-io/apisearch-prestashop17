@@ -28,10 +28,12 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once __DIR__ . '/model/apisearch_defaults.php';
-require_once __DIR__ . '/model/apisearch_hooks.php';
-require_once __DIR__ . '/model/apisearch_builder.php';
-require_once __DIR__ . '/model/apisearch_connection.php';
+use Apisearch\Model\ApisearchDefaults;
+use Apisearch\Model\ApisearchConnection;
+use Apisearch\Model\ApisearchHooks;
+use Apisearch\Model\ApisearchBuilder;
+
+require_once __DIR__.'/vendor/autoload.php';
 
 class Apisearch extends Module
 {
@@ -402,47 +404,12 @@ class Apisearch extends Module
     /**
      * @param $params
      */
-    public function hookActionObjectProductAddAfter($params)
-    {
-        if (\boolval(Configuration::get('AS_REAL_TIME_INDEXATION'))) {
-            $objectId = $params['object']->id;
-            if (array_key_exists($objectId, $this->updates)) {
-                return;
-            }
-
-            $this->hooks->putProductById($objectId);
-            $this->updates[$objectId] = true;
-        }
-    }
-
-    /**
-     * @param $params
-     */
-    public function hookActionObjectProductUpdateAfter($params)
-    {
-        // The Update Quantity hook already does this workok
-        return;
-
-        if (\boolval(Configuration::get('AS_REAL_TIME_INDEXATION'))) {
-            $objectId = $params['object']->id;
-            if (array_key_exists($objectId, $this->updates)) {
-                return;
-            }
-
-            $this->hooks->putProductById($objectId);
-            $this->updates[$objectId] = true;
-        }
-    }
-
-    /**
-     * @param $params
-     */
     public function hookActionObjectProductDeleteBefore($params)
     {
-        if (\boolval(Configuration::get('AS_REAL_TIME_INDEXATION'))) {
+        if (Configuration::get('AS_REAL_TIME_INDEXATION')) {
             $objectId = $params['object']->id;
             if (array_key_exists($objectId, $this->updates)) {
-                return;
+                // return;
             }
 
             $this->hooks->deleteProductById($objectId);
@@ -453,51 +420,16 @@ class Apisearch extends Module
     /**
      * @param $params
      */
-    public function hookActionUpdateQuantity($params)
-    {
-        if (\boolval(Configuration::get('AS_REAL_TIME_INDEXATION'))) {
-            $idProduct = $params['id_product'];
-            if (array_key_exists($idProduct, $this->updates)) {
-                return;
-            }
-
-            $idProductAttribute = $params['id_product_attribute'];
-            if ($idProductAttribute > 0) {
-                return;
-            }
-
-            $quantity = $params['quantity'];
-            $this->updates[$idProduct] = true;
-
-            if (Configuration::get('AS_INDEX_PRODUCT_NO_STOCK') || ($quantity > 0)) {
-                $this->hooks->putProductById($idProduct);
-            } else {
-                $this->hooks->deleteProductById($idProduct);
-            }
-        }
-    }
-
-    /**
-     * @param $params
-     */
     public function hookActionObjectOrderUpdateAfter($params)
     {
-        if (\boolval(Configuration::get('AS_REAL_TIME_INDEXATION'))) {
+        if (Configuration::get('AS_REAL_TIME_INDEXATION')) {
             $order = new Order($params['object']->id);
             $orderState = $order->getCurrentOrderState();
 
             if (Validate::isLoadedObject($order) && isset($orderState)) {
-                if ($order->valid && $orderState->logable && $orderState->paid) {
+                if ($order->valid) {
                     foreach ($order->getProducts() as $product) {
-                        if (
-                            $product['product_quantity'] == $product['product_quantity_in_stock'] &&
-                            $product['product_quantity_return'] == 0 &&
-                            $product['product_quantity_reinjected'] == 0
-                        ) {
-                            continue;
-                        }
-
-                        $this->hooks->deleteProductById($params['object']->id);
+                        $this->hooks->putProductById($product['id_product']);
                     }
                 }
             }

@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/apisearch_product.php';
+namespace Apisearch\Model;
 
 class ApisearchExporter
 {
@@ -108,9 +108,9 @@ class ApisearchExporter
     {
         $indicesClients = array();
         $indicesId = [];
-        foreach (Context::getContext()->language->getLanguages(true, Context::getContext()->shop->id) as $lang) {
+        foreach (\Context::getContext()->language->getLanguages(true, \Context::getContext()->shop->id) as $lang) {
             $langId = $lang['id_lang'];
-            $indexId = Configuration::get('AS_INDEX', $langId);
+            $indexId = \Configuration::get('AS_INDEX', $langId);
             if (in_array($indexId, $indicesId)) {
                 continue;
             }
@@ -131,10 +131,10 @@ class ApisearchExporter
     {
         $indicesClients = array();
         $indicesId = [];
-        foreach (Context::getContext()->language->getLanguages(true, Context::getContext()->shop->id) as $lang) {
+        foreach (\Context::getContext()->language->getLanguages(true, \Context::getContext()->shop->id) as $lang) {
             $langIsoCode = $lang['iso_code'];
             $langId = $lang['id_lang'];
-            $indexId = Configuration::get('AS_INDEX', $langId);
+            $indexId = \Configuration::get('AS_INDEX', $langId);
             if (in_array($indexId, $indicesId)) {
                 continue;
             }
@@ -158,9 +158,9 @@ class ApisearchExporter
      */
     public function getExportableProducts($langId)
     {
-        return Shop::isFeatureActive()
+        return \Shop::isFeatureActive()
             ? static::getFeaturedShopProducts($langId)
-            : static::getNonFeaturedShopProducts($langId, Context::getContext()->shop->id);
+            : static::getNonFeaturedShopProducts($langId, \Context::getContext()->shop->id);
     }
 
     /**
@@ -170,23 +170,23 @@ class ApisearchExporter
      */
     private function getFeaturedShopProducts($langId)
     {
-        if (empty(Configuration::get('AS_SHOP'))) {
+        if (empty(\Configuration::get('AS_SHOP'))) {
             return array();
         }
 
-        $assoc = json_decode(Configuration::get('AS_SHOP'), 1);
+        $assoc = json_decode(\Configuration::get('AS_SHOP'), 1);
         if (!isset($assoc['shop']) || $assoc['shop'] == false) {
             return array();
         }
 
-        $shopOg = Context::getContext()->shop->id;
+        $shopOg = \Context::getContext()->shop->id;
         $productsIdByShopId = array();
         foreach ($assoc['shop'] as $shopId) {
-            Shop::setContext(Shop::getContext(), $shopId);
+            \Shop::setContext(\Shop::getContext(), $shopId);
             $productsIdByShopId[$shopId] = $this->getNonFeaturedShopProducts($langId, $shopId);
         }
 
-        Shop::setContext(Shop::getContext(), $shopOg);
+        \Shop::setContext(\Shop::getContext(), $shopOg);
 
         return $productsIdByShopId;
     }
