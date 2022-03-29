@@ -106,7 +106,7 @@ class ApisearchBuilder
 
         $productId = $product['id_product'];
         $productAvailableForOrder = $product['available_for_order'];
-        $outOfStock = $product['out_of_stock'];
+        $outOfStock = $product['out_of_stock'] ?? false;
 
         $reference = $product['reference'];
         $ean13 = $product['ean13'];
@@ -148,7 +148,7 @@ class ApisearchBuilder
                 $reference = empty($product['reference']) ? $combination['reference'] : $product['reference'];
                 $ean13 = empty($product['ean13']) ? $combination['ean13'] : $product['ean13'];
                 $upc = empty($product['upd']) ? $combination['upc'] : $product['upd'];
-                $outOfStock = $combination['out_of_stock'];
+                $outOfStock = $combination['out_of_stock'] ?? false;
                 $img = $combination['id_image'] ?? $img;
             }
 
@@ -238,11 +238,13 @@ class ApisearchBuilder
         $colors = array_filter($colors, function($value) {
             return is_string($value) && !empty($value);
         });
+
         if (!empty($colors)) {
             $colors = array_map('trim', $colors);
             $colors = array_map(function($color) {
                 return ltrim($color, '#');
             }, $colors);
+            $colors = array_unique($colors);
             $colors = array_values($colors);
             $itemAsArray['indexed_metadata']['color_hex'] = $colors;
         }

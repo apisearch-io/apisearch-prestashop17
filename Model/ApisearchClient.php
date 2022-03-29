@@ -13,6 +13,9 @@ namespace Apisearch\Model;
  * @author Marc Morera <yuhu@mmoreram.com>
  */
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Message\Request;
+
 /**
  * Class ApisearchClient
  */
@@ -23,6 +26,7 @@ class ApisearchClient
     private $appUUID;
     private $indexUUID;
     private $tokenUUID;
+    private $client;
 
     /**
      * Set credentials.
@@ -55,6 +59,7 @@ class ApisearchClient
     {
         $this->host = $host;
         $this->version = $version;
+        $this->client = new Client();
     }
 
     /**
@@ -169,125 +174,34 @@ class ApisearchClient
             $url .= "&$parameterKey=$parameterValue";
         }
 
-        $useCurl = function_exists('curl_version');
-        if ($useCurl) {
-            $parts = $this->requestWithCurl($url, $method, $body);
-        } else {
-            $parts = $this->requestWithFileGetContents($url, $method, $body);
+        $isPost = 'GET' !== $method;
+        $client = $this->client;
+        $options = [];
+        if ($isPost) {
+            $options['json'] = $body;
         }
 
-        $data = $parts[0];
-        $code = $parts[1];
+        $request = $client->createRequest(
+            $method,
+            $url,
+            $options
+        );
 
-        if ('2' !== substr($code, 0, 1)) {
-            $dataArray = json_decode($data, true);
-            throw new \Exception($dataArray['message'] ?? '', $dataArray['code'] ?? 500);
+        $response = $this
+            ->client
+            ->send($request);
+
+        $statusCode = $response->getStatusCode();
+        $data = $response->getBody()->getContents();
+        $dataArray = json_decode($data, true);
+
+        if ('2' !== substr($statusCode, 0, 1)) {
+            throw new \Exception(
+                $dataArray['message'] ?? '',
+                $dataArray['code'] ?? 500
+            );
         }
 
         return json_decode($data, true);
-    }
-
-    /**
-     * @param string $url
-     * @param string $method
-     * @param array $body
-     *
-     * @return array
-     */
-    private function requestWithFileGetContents(
-        $url,
-        $method,
-        $body
-    )
-    {
-        syslog(0, 'file_get_contents');
-        if ('GET' !== $method) {
-            $data = json_encode($body);
-            $context = stream_context_create([
-                'http' => [
-                    'method' => $method,
-                    'ignore_errors' => true,
-                    'header' => "Content-type: application/json\r\n".
-                        "Accept: application/json\r\n".
-                        "Connection: close\r\n".
-                        'Content-length: '.strlen($data)."\r\n",
-                    'content' => $data,
-                ],
-            ]);
-
-            $data = file_get_contents($url, false, $context);
-        } else {
-            $data = file_get_contents($url);
-        }
-
-        $code = $this->parseFileGetContentsResponseStatusCode($http_response_header['0']);
-
-        return array($data, $code);
-    }
-
-    /**
-     * Parse response header and return value.
-     *
-     * @param string $header
-     *
-     * @return int
-     */
-    private function parseFileGetContentsResponseStatusCode($header)
-    {
-        try {
-            list(, $code, $status) = explode(' ', $header, 3);
-
-            return (int)$code;
-        } catch (\Exception $exception) {
-            // Silent pass
-        }
-
-        return null;
-    }
-
-    /**
-     * @param string $url
-     * @param string $method
-     * @param array $body
-     *
-     * @return array
-     */
-    private function requestWithCurl(
-        $url,
-        $method,
-        $body
-    )
-    {
-        syslog(0, 'cURL');
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-
-        if ('GET' !== $method) {
-            $bodyAsJson = json_encode($body);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $bodyAsJson);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                "Content-type: application/json",
-                "Accept: application/json",
-                "Connection: close",
-                "Content-length: " . strlen($bodyAsJson),
-            ));
-        }
-
-        $result = false;
-        $code = null;
-
-        try {
-            $result = curl_exec($ch);
-            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        } catch (\Throwable $exception) {
-            // Silent exception
-        }
-
-        return array(
-            $result,
-            $code
-        );
     }
 }

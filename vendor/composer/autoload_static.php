@@ -22,16 +22,6 @@ class ComposerStaticInitdd74725e459a3518ed619d301b8a226a
 
     public static $classMap = array (
         'Apisearch' => __DIR__ . '/../..' . '/apisearch.php',
-        'Apisearch\\Listener\\ProductUpdateListener' => __DIR__ . '/../..' . '/Listener/ProductUpdateListener.php',
-        'Apisearch\\Model\\ApisearchBuilder' => __DIR__ . '/../..' . '/Model/ApisearchBuilder.php',
-        'Apisearch\\Model\\ApisearchClient' => __DIR__ . '/../..' . '/Model/ApisearchClient.php',
-        'Apisearch\\Model\\ApisearchConnection' => __DIR__ . '/../..' . '/Model/ApisearchConnection.php',
-        'Apisearch\\Model\\ApisearchDefaults' => __DIR__ . '/../..' . '/Model/ApisearchDefaults.php',
-        'Apisearch\\Model\\ApisearchExporter' => __DIR__ . '/../..' . '/Model/ApisearchExporter.php',
-        'Apisearch\\Model\\ApisearchHooks' => __DIR__ . '/../..' . '/Model/ApisearchHooks.php',
-        'Apisearch\\Model\\ApisearchManufacturer' => __DIR__ . '/../..' . '/Model/ApisearchManufacturer.php',
-        'Apisearch\\Model\\ApisearchProduct' => __DIR__ . '/../..' . '/Model/ApisearchProduct.php',
-        'Apisearch\\Model\\InvalidProductException' => __DIR__ . '/../..' . '/Model/InvalidProductException.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
     );
 
