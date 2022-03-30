@@ -26,6 +26,7 @@
  */
 include_once dirname(__FILE__) . '/../../config/config.inc.php';
 include_once dirname(__FILE__) . '/../../init.php';
+include_once dirname(__FILE__) . '/vendor/autoload.php';
 
 use Apisearch\Model\ApisearchExporter;
 use Apisearch\Model\ApisearchConnection;

@@ -182,7 +182,7 @@ class ApisearchBuilder
             return false;
         }
 
-        $link = \Context::getContext()->link->getProductLink($productId);
+        $link = \Context::getContext()->link->getProductLink($productId, null, null, null, $langId);
         $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
         $price = \Product::getPriceStatic($productId, true, $idProductAttribute, \Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
         $price = \round($price, 2);
@@ -225,7 +225,7 @@ class ApisearchBuilder
                 'name' => \strval($product['name']),
             ),
             'suggest' => array(
-                \strval($product['name']),
+                // \strval($product['name']),
             ),
             'exact_matching_metadata' => array(
                 \strval($productId),
