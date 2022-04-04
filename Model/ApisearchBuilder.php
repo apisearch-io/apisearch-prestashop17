@@ -223,10 +223,13 @@ class ApisearchBuilder
             ), $frontFeaturesKeyFixed),
             'searchable_metadata' => array(
                 'name' => \strval($product['name']),
+                'categories' => $categoriesName,
             ),
-            'suggest' => array(
+            'suggest' => array_values(array_unique(array_filter(array_merge(array(
                 // \strval($product['name']),
             ),
+                $categoriesName
+            )))),
             'exact_matching_metadata' => array(
                 \strval($productId),
                 \strval($reference),
