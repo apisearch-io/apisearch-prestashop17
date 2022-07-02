@@ -69,7 +69,6 @@ class Apisearch extends Module
     {
         Configuration::updateValue('AS_CLUSTER_URL', '');
         Configuration::updateValue('AS_ADMIN_URL', ApisearchDefaults::DEFAULT_AS_ADMIN_URL);
-        Configuration::updateValue('AS_API_VERSION', ApisearchDefaults::DEFAULT_AS_API_VERSION);
         Configuration::updateValue('AS_APP', '');
         Configuration::updateValue('AS_INDEX', '');
         Configuration::updateValue('AS_TOKEN', '');
@@ -206,13 +205,6 @@ class Apisearch extends Module
                 array(
                     'col' => 3,
                     'type' => 'text',
-                    'label' => $this->l('Apisearch Api Version'),
-                    'placeholder' => ApisearchDefaults::DEFAULT_AS_API_VERSION,
-                    'name' => 'AS_API_VERSION',
-                ),
-                array(
-                    'col' => 3,
-                    'type' => 'text',
                     'label' => $this->l('App Hash ID'),
                     'name' => 'AS_APP',
                 ),
@@ -329,7 +321,6 @@ class Apisearch extends Module
             'AS_DISPLAY_SEARCH_BAR' => Configuration::get('AS_DISPLAY_SEARCH_BAR'),
             'AS_CLUSTER_URL' => Configuration::get('AS_CLUSTER_URL'),
             'AS_ADMIN_URL' => Configuration::get('AS_ADMIN_URL'),
-            'AS_API_VERSION' => Configuration::get('AS_API_VERSION'),
             'AS_APP' => Configuration::get('AS_APP'),
             'AS_INDEX_PRODUCTS_WITHOUT_IMAGE' => Configuration::get('AS_INDEX_PRODUCTS_WITHOUT_IMAGE'),
             'AS_REAL_TIME_INDEXATION' => Configuration::get('AS_REAL_TIME_INDEXATION'),

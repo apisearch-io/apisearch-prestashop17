@@ -26,15 +26,22 @@
  */
 set_time_limit(1800);
 
-    require_once(dirname(__FILE__) . '../../../config/config.inc.php');
-    require_once(dirname(__FILE__) . '../../../init.php');
-    require_once __DIR__.'/vendor/autoload.php';
+/**
+ * We suppress all possible incoming output data to avoid malformed feed
+ */
+ob_start();
 
-    use Apisearch\Model\ApisearchExporter;
-    use Apisearch\Model\ApisearchConnection;
-    use Apisearch\Model\ApisearchBuilder;
+require_once(dirname(__FILE__) . '../../../config/config.inc.php');
+require_once(dirname(__FILE__) . '../../../init.php');
+require_once __DIR__.'/vendor/autoload.php';
 
-    require_once __DIR__ . '/apisearch.php';
+use Apisearch\Model\ApisearchExporter;
+use Apisearch\Model\ApisearchConnection;
+use Apisearch\Model\ApisearchBuilder;
+
+require_once __DIR__ . '/apisearch.php';
+
+ob_end_clean();
 
 try {
     createFeed();

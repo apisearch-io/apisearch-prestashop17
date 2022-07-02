@@ -42,8 +42,6 @@ class ApisearchConnection
 
         $clusterUrl = \Configuration::get('AS_CLUSTER_URL');
         $clusterUrl = $clusterUrl == "" ? ApisearchDefaults::DEFAULT_AS_CLUSTER_URL : $clusterUrl;
-        $apiVersion = \Configuration::get('AS_API_VERSION');
-        $apiVersion = $apiVersion == "" ? ApisearchDefaults::DEFAULT_AS_API_VERSION : $apiVersion;
 
 
         $appId = \Configuration::get('AS_APP');
@@ -54,7 +52,7 @@ class ApisearchConnection
             return false;
         }
 
-        $apisearchClient = new ApisearchClient($clusterUrl, $apiVersion);
+        $apisearchClient = new ApisearchClient($clusterUrl, ApisearchDefaults::DEFAULT_AS_API_VERSION);
         $apisearchClient->setCredentials($appId, $indexId, $token);
 
         return $apisearchClient;
