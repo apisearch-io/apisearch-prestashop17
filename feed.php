@@ -41,16 +41,7 @@ use Apisearch\Model\ApisearchBuilder;
 
 require_once __DIR__ . '/apisearch.php';
 
-ob_end_clean();
-
 try {
-    createFeed();
-} catch (\Throwable $exception) {
-    syslog(0, $exception->getMessage());
-}
-
-function createFeed()
-{
     $exporter = new ApisearchExporter(
         new ApisearchBuilder(),
         new ApisearchConnection()
@@ -60,6 +51,8 @@ function createFeed()
     $format = Tools::getValue('format');
     $items = $exporter->getAllItems($langId);
 
+    ob_end_clean();
+
     if ('jsonl' === $format) {
         foreach ($items as $item) {
             echo json_encode($item) . "\n";
@@ -68,7 +61,12 @@ function createFeed()
     } elseif ('debug' === $format) {
 
         // Do nothing. Just debug
-    }else {
+        echo json_encode(['message' => count($items) . ' items available']);
+
+    } else {
         throw new \Exception('Format not found. Use one of these: jsonl');
     }
+
+} catch (\Throwable $exception) {
+    syslog(0, $exception->getMessage());
 }
