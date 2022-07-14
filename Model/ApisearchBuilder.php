@@ -204,9 +204,6 @@ class ApisearchBuilder
             ),
             'metadata' => array(
                 'name' => \strval($product['name']),
-                'reference' => \strval($reference),
-                'ean' => \strval($ean13),
-                'upc' => \strval($upc),
                 'show_price' => ($productAvailableForOrder || $product['show_price']), // Deprecated
                 'link' => $link, // Deprecated
                 'url' => $link,
@@ -219,7 +216,10 @@ class ApisearchBuilder
                 'categories' => $categoriesName,
                 'available' => $available,
                 'with_discount' => $oldPrice - $price > 0,
-                'with_variants' => $hasCombinations
+                'with_variants' => $hasCombinations,
+                'reference' => \strval($reference),
+                'ean' => \strval($ean13),
+                'upc' => \strval($upc),
             ), $frontFeaturesKeyFixed),
             'searchable_metadata' => array(
                 'name' => \strval($product['name']),
