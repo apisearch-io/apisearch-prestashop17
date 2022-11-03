@@ -175,7 +175,7 @@ class ApisearchProduct
             LEFT JOIN `{$prefix}attribute_group_lang` agl ON (ag.`id_attribute_group` = agl.`id_attribute_group` AND agl.`id_lang` = $id_lang)
             LEFT JOIN `{$prefix}product_attribute_image` pai ON pai.id_product_attribute = pa.id_product_attribute
             LEFT JOIN `{$prefix}image_lang` il ON (il.`id_image` = pai.`id_image`)
-            LEFT JOIN `{$prefix}image` i ON (i.`id_image` = pai.`id_image`)
+            LEFT JOIN `{$prefix}image` i ON (i.`id_image` = pai.`id_image`) AND i.cover = 1
             WHERE pa.`id_product` = $productId";
 
         $res = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);

@@ -108,9 +108,9 @@ class ApisearchBuilder
         $productAvailableForOrder = $product['available_for_order'];
         $outOfStock = $product['out_of_stock'] ?? false;
 
-        $reference = $product['reference'];
-        $ean13 = $product['ean13'];
-        $upc = $product['upc'];
+        $references = array($product['reference']);
+        $eans = array($product['ean13']);
+        $upcs = array($product['upc']);
         $img = $product['id_image'];
         $hasCombinations = \intval($product['cache_default_attribute'] ?? 0) > 0;
         $idProductAttribute = null;
@@ -137,34 +137,37 @@ class ApisearchBuilder
 
             $quantity = 0;
 
-        foreach ($combinations as $combination) {
-            $quantity += \intval(($combination['quantity'] ?? 0));
-            $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
-                ? $combination['attribute_color']
-                : null;
-
-            if (isset($combination['default_on'])) {
-                $idProductAttribute = $combination['id_product_attribute'];
-                $reference = empty($product['reference']) ? $combination['reference'] : $product['reference'];
-                $ean13 = empty($product['ean13']) ? $combination['ean13'] : $product['ean13'];
-                $upc = empty($product['upd']) ? $combination['upc'] : $product['upd'];
-                $outOfStock = $combination['out_of_stock'] ?? false;
-                $img = $combination['id_image'] ?? $img;
-            }
-
-            if (!isset($attributes[$combination['group_name']]) || (isset($attributes[$combination['group_name']]) && !in_array($combination['attribute_name'], $attributes[$combination['group_name']]))) {
-                $attributes[$combination['group_name']][] = $combination['attribute_name'];
-            }
-        }
-
-        // Only if we have stock, we are going to check availability
-        if ($quantity > 0) {
             foreach ($combinations as $combination) {
-                $minimalQuantity = $combination['minimal_quantity'];
-                $idProductAttribute = $combination['id_product_attribute'];
-                $available = $available || $this->getAvailability($productId, $productAvailableForOrder, $outOfStock, $minimalQuantity, $idProductAttribute);
+                $references[] = $combination['reference'] ?? null;
+                $eans[] = $combination['ean13'] ?? null;
+                $upcs[] = $combination['upc'] ?? null;
+
+                $quantity += \intval(($combination['quantity'] ?? 0));
+                $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
+                    ? $combination['attribute_color']
+                    : null;
+
+                if (isset($combination['default_on'])) {
+                    $idProductAttribute = $combination['id_product_attribute'];
+                    $outOfStock = $combination['out_of_stock'] ?? false;
+                    if (empty($img)) {
+                        $img = $combination['id_image'] ?? null;
+                    }
+                }
+
+                if (!isset($attributes[$combination['group_name']]) || (isset($attributes[$combination['group_name']]) && !in_array($combination['attribute_name'], $attributes[$combination['group_name']]))) {
+                    $attributes[$combination['group_name']][] = $combination['attribute_name'];
+                }
             }
-        }
+
+            // Only if we have stock, we are going to check availability
+            if ($quantity > 0) {
+                foreach ($combinations as $combination) {
+                    $minimalQuantity = $combination['minimal_quantity'];
+                    $idProductAttribute = $combination['id_product_attribute'];
+                    $available = $available || $this->getAvailability($productId, $productAvailableForOrder, $outOfStock, $minimalQuantity, $idProductAttribute);
+                }
+            }
 
         } else {
             $available = $this->getAvailability($productId, $productAvailableForOrder, $product['out_of_stock'], $product['minimal_quantity']);
@@ -182,20 +185,27 @@ class ApisearchBuilder
             return false;
         }
 
-        $link = \Context::getContext()->link->getProductLink($productId, null, null, null, $langId);
+        $url = \Context::getContext()->link->getProductLink($productId, null, null, null, $langId);
         $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
-        $price = \Product::getPriceStatic($productId, true, $idProductAttribute, \Configuration::get('PS_PRICE_DISPLAY_PRECISION'));
+        $price = \Product::getPriceStatic($productId, true, $idProductAttribute);
         $price = \round($price, 2);
-        $oldPrice = \Product::getPriceStatic($productId, true, $idProductAttribute, \Configuration::get('PS_PRICE_DISPLAY_PRECISION'), null, false, false);
+        $oldPrice = \Product::getPriceStatic($productId, true, $idProductAttribute, 6, null, false, false);
         $oldPrice = \round($oldPrice, 2);
 
         $frontFeatures = $product['front_features'] ?? null;
         $frontFeaturesKeyFixed = [];
+        $frontFeaturesValues = [];
         if (is_array($frontFeatures)) {
             foreach ($frontFeatures as $key => $value) {
                 $frontFeaturesKeyFixed[strtolower(str_replace([' '], ['_'], $key))] = $value;
+                $frontFeaturesValues = array_merge($frontFeaturesValues, is_array($value) ? $value : [$value]);
             }
         }
+
+        $eans = self::toArrayOfStrings($eans);
+        $upcs = self::toArrayOfStrings($upcs);
+        $references = self::toArrayOfStrings($references);
+        $categoriesName = array_values(array_unique(array_filter($categoriesName)));
 
         $itemAsArray = array(
             'uuid' => array(
@@ -204,9 +214,14 @@ class ApisearchBuilder
             ),
             'metadata' => array(
                 'name' => \strval($product['name']),
-                'show_price' => ($productAvailableForOrder || $product['show_price']), // Deprecated
-                'link' => $link, // Deprecated
-                'url' => $link,
+
+                'reference' => $references,
+                'ean' => $eans,
+                'upc' => $upcs,
+                // 'show_price' => ($productAvailableForOrder || $product['show_price']), // Deprecated & Deleted. Use price instead
+                // 'link' => $url, // Deprecated & Deleted. Use url instead
+                'url' => $url,
+
                 'img' => $image,
                 'old_price' => $oldPrice,
             ),
@@ -217,25 +232,20 @@ class ApisearchBuilder
                 'available' => $available,
                 'with_discount' => $oldPrice - $price > 0,
                 'with_variants' => $hasCombinations,
-                'reference' => \strval($reference),
-                'ean' => \strval($ean13),
-                'upc' => \strval($upc),
+                'reference' => $references,
+                'ean' => $eans,
+                'upc' => $upcs,
             ), $frontFeaturesKeyFixed),
             'searchable_metadata' => array(
                 'name' => \strval($product['name']),
                 'categories' => $categoriesName,
+                'features' => self::toArrayOfStrings($frontFeaturesValues)
             ),
-            'suggest' => array_values(array_unique(array_filter(array_merge(array(
-                // \strval($product['name']),
-            ),
-                $categoriesName
-            )))),
-            'exact_matching_metadata' => array(
-                \strval($productId),
-                \strval($reference),
-                \strval($ean13),
-                \strval($upc)
-            )
+            'suggest' => $categoriesName,
+            'exact_matching_metadata' => array_values(array_unique(array_merge(
+                array($productId),
+                $references, $eans, $upcs
+            )))
         );
 
         $colors = array_filter($colors, function($value) {
@@ -266,11 +276,16 @@ class ApisearchBuilder
         }
 
         foreach ($attributes as $attributeName => $attrValues) {
-            $itemAsArray['indexed_metadata'][strtolower(str_replace([' '], ['_'], $attributeName))] = (array)$attrValues;
+            $attrValuesAsArray = is_array($attrValues) ? $attrValues : [$attrValues];
+            $itemAsArray['indexed_metadata'][strtolower(str_replace([' '], ['_'], $attributeName))] = $attrValuesAsArray;
+            $itemAsArray['searchable_metadata']['features'] = array_merge(
+                $itemAsArray['searchable_metadata']['features'],
+                $attrValuesAsArray
+            );
         }
 
         if ($this->indexProductPurchaseCount) {
-            $itemAsArray['indexed_metadata']['quantity_sold'] = \intval($product['sales']); // deprecated
+            // $itemAsArray['indexed_metadata']['quantity_sold'] = \intval($product['sales']); // Deprecated & Deleted. Use sales instead
             $itemAsArray['indexed_metadata']['sales'] = \intval($product['sales']);
         }
 
@@ -289,23 +304,23 @@ class ApisearchBuilder
     }
 
     /**
-     * @param     $id
-     * @param     $available_for_order
-     * @param     $out_of_stock
-     * @param     $minimal_quantity
-     * @param int $combination_id
+     * @param int    $id
+     * @param bool    $availableForOrder
+     * @param bool    $outOfStock
+     * @param int    $minQuantity
+     * @param int $combinationId
      *
      * @return bool
      */
-    private function getAvailability($id, $available_for_order, $out_of_stock, $minimal_quantity, $combination_id = 0)
+    private function getAvailability($id, $availableForOrder, $outOfStock, $minQuantity, $combinationId = 0)
     {
         $available = false;
-        if ($available_for_order) {
+        if ($availableForOrder) {
             if (\Configuration::get('PS_STOCK_MANAGEMENT')) {
-                if ((\Configuration::get('PS_ORDER_OUT_OF_STOCK') && $out_of_stock == 2) || $out_of_stock == 1) {
+                if ((\Configuration::get('PS_ORDER_OUT_OF_STOCK') && $outOfStock == 2) || $outOfStock == 1) {
                     $available = true;
                 } else {
-                    if (\Product::getRealQuantity($id, $combination_id) >= $minimal_quantity) {
+                    if (\Product::getRealQuantity($id, $combinationId) >= $minQuantity) {
                         $available = true;
                     }
                 }
@@ -315,5 +330,14 @@ class ApisearchBuilder
         }
 
         return $available;
+    }
+
+    /**
+     * @param array $array
+     * @return array
+     */
+    private static function toArrayOfStrings(array $array) : array
+    {
+        return array_values(array_map('strval', array_unique(array_filter($array))));
     }
 }
