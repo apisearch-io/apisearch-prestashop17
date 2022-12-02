@@ -106,9 +106,10 @@ class ApisearchBuilder
 
         $productId = $product['id_product'];
         $productAvailableForOrder = $product['available_for_order'];
-        $outOfStock = $product['out_of_stock'] ?? false;
+        $outOfStock = $product['real_out_of_stock'] ?? 1;
 
         $references = array($product['reference']);
+        $supplierReferences = $product['supplier_referencies'];
         $eans = array($product['ean13']);
         $upcs = array($product['upc']);
         $img = $product['id_image'];
@@ -149,7 +150,6 @@ class ApisearchBuilder
 
                 if (isset($combination['default_on'])) {
                     $idProductAttribute = $combination['id_product_attribute'];
-                    $outOfStock = $combination['out_of_stock'] ?? false;
                     if (empty($img)) {
                         $img = $combination['id_image'] ?? null;
                     }
@@ -170,7 +170,7 @@ class ApisearchBuilder
             }
 
         } else {
-            $available = $this->getAvailability($productId, $productAvailableForOrder, $product['out_of_stock'], $product['minimal_quantity']);
+            $available = $this->getAvailability($productId, $productAvailableForOrder, $outOfStock, $product['minimal_quantity']);
         }
 
         if (!$available && !$this->indexProductNoStock) {
@@ -224,6 +224,7 @@ class ApisearchBuilder
 
                 'img' => $image,
                 'old_price' => $oldPrice,
+                'supplier_reference' => $supplierReferences,
             ),
             'indexed_metadata' => array_merge(array(
                 'as_version' => \intval($version),
@@ -242,10 +243,11 @@ class ApisearchBuilder
                 'features' => self::toArrayOfStrings($frontFeaturesValues)
             ),
             'suggest' => $categoriesName,
-            'exact_matching_metadata' => array_values(array_unique(array_merge(
+            'exact_matching_metadata' => array_values(array_filter(array_unique(array_merge(
                 array($productId),
-                $references, $eans, $upcs
-            )))
+                $references, $eans, $upcs,
+                $supplierReferences
+            ))))
         );
 
         $colors = array_filter($colors, function($value) {
@@ -314,22 +316,32 @@ class ApisearchBuilder
      */
     private function getAvailability($id, $availableForOrder, $outOfStock, $minQuantity, $combinationId = 0)
     {
-        $available = false;
-        if ($availableForOrder) {
-            if (\Configuration::get('PS_STOCK_MANAGEMENT')) {
-                if ((\Configuration::get('PS_ORDER_OUT_OF_STOCK') && $outOfStock == 2) || $outOfStock == 1) {
-                    $available = true;
-                } else {
-                    if (\Product::getRealQuantity($id, $combinationId) >= $minQuantity) {
-                        $available = true;
-                    }
-                }
-            } else {
-                $available = true;
+        if (!$availableForOrder) {
+            return false;
+        }
+
+        //
+        // This value can be
+        // 0 -> Not allow selling 0 stock products
+        // 1 -> Allow selling 0 stock products
+        //
+        $defaultOutOfStock = \Configuration::get('PS_ORDER_OUT_OF_STOCK');
+        if (\Configuration::get('PS_STOCK_MANAGEMENT')) {
+            if ($outOfStock == 2 && $defaultOutOfStock == 1) {
+                return true;
+            }
+
+            if ($outOfStock == 1) {
+                return true;
+            }
+
+            // At this point, if there is no stock, can't sell
+            if (\Product::getRealQuantity($id, $combinationId) < $minQuantity) {
+                return false;
             }
         }
 
-        return $available;
+        return true;
     }
 
     /**
