@@ -59,7 +59,8 @@ class ApisearchProduct
                 LEFT JOIN {$prefix}product_sale psale ON (psale.id_product = p.id_product)
                 LEFT JOIN {$prefix}stock_available st ON (st.id_product = p.id_product)
                 LEFT JOIN {$prefix}product_supplier psup ON (psup.id_product = psup.id_product)
-            WHERE p.id_product IN($productIdsAsString);
+            WHERE p.id_product IN($productIdsAsString)
+            GROUP BY p.id_product;
         ";
 
         $products = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
@@ -71,6 +72,9 @@ class ApisearchProduct
             $product['description'] = \strip_tags($product['description'] ?? '');
             $product['description_short'] = \strip_tags($product['description_short'] ?? '');
             $product['supplier_referencies'] = explode('|', $product['supplier_referencies'] ?? '');
+            if ($product['supplier_referencies'] == [""]) {
+                $product['supplier_referencies'] = null;
+            }
             $productsIndexedById[$product['id_product']] = $product;
         }
 
