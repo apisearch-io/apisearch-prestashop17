@@ -214,14 +214,12 @@ class ApisearchBuilder
             ),
             'metadata' => array(
                 'name' => \strval($product['name']),
-
-                'reference' => $references,
-                'ean' => $eans,
-                'upc' => $upcs,
+                // 'reference' => $references, // Exists in indexed_metadata
+                // 'ean' => $eans, // Exists in indexed_metadata
+                // 'upc' => $upcs, // Exists in indexed_metadata
                 // 'show_price' => ($productAvailableForOrder || $product['show_price']), // Deprecated & Deleted. Use price instead
                 // 'link' => $url, // Deprecated & Deleted. Use url instead
                 'url' => $url,
-
                 'img' => $image,
                 'old_price' => $oldPrice,
                 'supplier_reference' => $supplierReferences,
@@ -246,7 +244,7 @@ class ApisearchBuilder
             'exact_matching_metadata' => array_values(array_filter(array_unique(array_merge(
                 array($productId),
                 $references, $eans, $upcs,
-                $supplierReferences
+                $supplierReferences ?? []
             ))))
         );
 
