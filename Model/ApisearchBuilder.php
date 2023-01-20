@@ -217,12 +217,12 @@ class ApisearchBuilder
                 // 'reference' => $references, // Exists in indexed_metadata
                 // 'ean' => $eans, // Exists in indexed_metadata
                 // 'upc' => $upcs, // Exists in indexed_metadata
-                // 'show_price' => ($productAvailableForOrder || $product['show_price']), // Deprecated & Deleted. Use price instead
                 // 'link' => $url, // Deprecated & Deleted. Use url instead
                 'url' => $url,
                 'img' => $image,
                 'old_price' => $oldPrice,
                 'supplier_reference' => $supplierReferences,
+                'show_price' => ($productAvailableForOrder || $product['show_price']), // Checks if the price must be shown
             ),
             'indexed_metadata' => array_merge(array(
                 'as_version' => \intval($version),
