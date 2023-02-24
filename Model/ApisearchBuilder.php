@@ -7,6 +7,7 @@ class ApisearchBuilder
     private $avoidProductsWithoutImage;
     private $indexProductPurchaseCount;
     private $indexProductNoStock;
+    private $indexSupplierReferences;
 
     /**
      */
@@ -15,6 +16,7 @@ class ApisearchBuilder
         $this->avoidProductsWithoutImage = !\boolval(\Configuration::get('AS_INDEX_PRODUCTS_WITHOUT_IMAGE'));
         $this->indexProductPurchaseCount = \boolval(\Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT'));
         $this->indexProductNoStock = \boolval(\Configuration::get('AS_INDEX_PRODUCT_NO_STOCK'));
+        $this->indexSupplierReferences = \boolval(\Configuration::get('AS_FIELDS_SUPPLIER_REFERENCES'));
     }
 
     /**
@@ -109,7 +111,7 @@ class ApisearchBuilder
         $outOfStock = $product['real_out_of_stock'] ?? 1;
 
         $references = array($product['reference']);
-        $supplierReferences = $product['supplier_referencies'];
+        $supplierReferences = $this->indexSupplierReferences ? $product['supplier_referencies'] : [];
         $eans = array($product['ean13']);
         $upcs = array($product['upc']);
         $img = $product['id_image'];
@@ -214,10 +216,6 @@ class ApisearchBuilder
             ),
             'metadata' => array(
                 'name' => \strval($product['name']),
-                // 'reference' => $references, // Exists in indexed_metadata
-                // 'ean' => $eans, // Exists in indexed_metadata
-                // 'upc' => $upcs, // Exists in indexed_metadata
-                // 'link' => $url, // Deprecated & Deleted. Use url instead
                 'url' => $url,
                 'img' => $image,
                 'old_price' => $oldPrice,

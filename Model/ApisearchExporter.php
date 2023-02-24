@@ -71,7 +71,7 @@ class ApisearchExporter
     /**
      * @param string $langIsoCode
      */
-    public function getAllItems($langIsoCode)
+    public function printItems($langIsoCode)
     {
         $apisearchClients = self::getIndicesClientByLanguageIsoCode();
         if (!array_key_exists($langIsoCode, $apisearchClients)) {
@@ -81,7 +81,7 @@ class ApisearchExporter
         $langId = $apisearchClients[$langIsoCode]['lang_id'];
         $productsIdByShopId = self::getExportableProducts($langId);
         if (empty($productsIdByShopId)) {
-            return [];
+            die;
         }
 
         /**
@@ -91,10 +91,11 @@ class ApisearchExporter
         $version = \strval(rand(1000000000, 9999999999));
         $bulkNumber = 100;
         $allItems = [];
-
         foreach ($productsIdByShopId as $shopId => $productsId) {
             $this->builder->buildItems($productsId, $langId, $version, $bulkNumber, $shopId, function(array $items) use (&$allItems) {
-                $allItems = array_merge($allItems, $items);
+                foreach ($items as $item) {
+                    echo json_encode($item) . PHP_EOL;
+                }
             });
         }
 

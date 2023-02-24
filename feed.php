@@ -48,24 +48,7 @@ try {
     );
 
     $langId = Tools::getValue('lang');
-    $format = Tools::getValue('format');
-    $items = $exporter->getAllItems($langId);
-
-    ob_end_clean();
-
-    if ('jsonl' === $format) {
-        foreach ($items as $item) {
-            echo json_encode($item) . "\n";
-        }
-
-    } elseif ('debug' === $format) {
-
-        // Do nothing. Just debug
-        echo json_encode(['message' => count($items) . ' items available']);
-
-    } else {
-        throw new \Exception('Format not found. Use one of these: jsonl');
-    }
+    $items = $exporter->printItems($langId);
 
 } catch (\Throwable $exception) {
     syslog(0, $exception->getMessage());

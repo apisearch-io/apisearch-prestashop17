@@ -77,6 +77,7 @@ class Apisearch extends Module
         Configuration::updateValue('AS_REAL_TIME_INDEXATION', ApisearchDefaults::DEFAULT_REAL_TIME_INDEXATION);
         Configuration::updateValue('AS_INDEX_PRODUCT_PURCHASE_COUNT', ApisearchDefaults::DEFAULT_AS_INDEX_PRODUCT_PURCHASE_COUNT);
         Configuration::updateValue('AS_INDEX_PRODUCT_NO_STOCK', ApisearchDefaults::DEFAULT_AS_INDEX_PRODUCT_NO_STOCK);
+        Configuration::updateValue('AS_FIELDS_SUPPLIER_REFERENCES', ApisearchDefaults::AS_FIELDS_SUPPLIER_REFERENCES);
 
         $meta_as = new Meta();
         $meta_as->page = 'module-apisearch-as_search';
@@ -191,20 +192,6 @@ class Apisearch extends Module
                 array(
                     'col' => 3,
                     'type' => 'text',
-                    'label' => $this->l('Apisearch Cluster Url'),
-                    // 'placeholder' => ApisearchDefaults::DEFAULT_AS_CLUSTER_URL,
-                    'name' => 'AS_CLUSTER_URL',
-                ),
-                array(
-                    'col' => 3,
-                    'type' => 'text',
-                    'label' => $this->l('Apisearch Admin Url'),
-                    // 'placeholder' => ApisearchDefaults::DEFAULT_AS_ADMIN_URL,
-                    'name' => 'AS_ADMIN_URL',
-                ),
-                array(
-                    'col' => 3,
-                    'type' => 'text',
                     'label' => $this->l('App Hash ID'),
                     'name' => 'AS_APP',
                 ),
@@ -216,36 +203,10 @@ class Apisearch extends Module
                     'lang' => true
                 ),
                 array(
-                    'col' => Language::isMultiLanguageActivated($this->context->shop->id) ? 4 : 3,
-                    'type' => 'text',
-                    'label' => $this->l('Management token Hash ID'),
-                    'name' => 'AS_TOKEN',
-                    'lang' => true
-                ),
-                array(
                     'col' => 3,
                     'type' => 'switch',
                     'label' => $this->l('Index products without image'),
                     'name' => 'AS_INDEX_PRODUCTS_WITHOUT_IMAGE',
-                    'is_bool' => true,
-                    'values' => array(
-                        array(
-                            'id' => 'active_on',
-                            'value' => 1,
-                            'label' => $this->l('Yes')
-                        ),
-                        array(
-                            'id' => 'active_off',
-                            'value' => 0,
-                            'label' => $this->l('No')
-                        )
-                    ),
-                ),
-                array(
-                    'col' => 3,
-                    'type' => 'switch',
-                    'label' => $this->l('Real time indexation'),
-                    'name' => 'AS_REAL_TIME_INDEXATION',
                     'is_bool' => true,
                     'values' => array(
                         array(
@@ -298,6 +259,63 @@ class Apisearch extends Module
                         )
                     ),
                 ),
+                array(
+                    'col' => 3,
+                    'type' => 'switch',
+                    'label' => $this->l('Index supplier references'),
+                    'name' => 'AS_FIELDS_SUPPLIER_REFERENCES',
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('Yes')
+                        ),
+                        array(
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('No')
+                        )
+                    ),
+                ),
+
+
+
+                array(
+                    'col' => 3,
+                    'type' => 'switch',
+                    'label' => $this->l('Real time indexation'),
+                    'name' => 'AS_REAL_TIME_INDEXATION',
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('Yes')
+                        ),
+                        array(
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('No')
+                        )
+                    ),
+                ),
+                array(
+                    'col' => 3,
+                    'form_group_class' => 'real-time',
+                    'type' => 'text',
+                    'label' => $this->l('Apisearch Cluster Url'),
+                    'name' => 'AS_CLUSTER_URL',
+                    'placeholder' => ApisearchDefaults::DEFAULT_AS_CLUSTER_URL,
+                ),
+                array(
+                    'col' => Language::isMultiLanguageActivated($this->context->shop->id) ? 4 : 3,
+                    'form_group_class' => 'real-time',
+                    'type' => 'text',
+                    'label' => $this->l('Management token Hash ID'),
+                    'name' => 'AS_TOKEN',
+                    'lang' => true
+                ),
             ),
             'submit' => array(
                 'title' => $this->l('Save'),
@@ -326,6 +344,7 @@ class Apisearch extends Module
             'AS_REAL_TIME_INDEXATION' => Configuration::get('AS_REAL_TIME_INDEXATION'),
             'AS_INDEX_PRODUCT_PURCHASE_COUNT' => Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT'),
             'AS_INDEX_PRODUCT_NO_STOCK' => Configuration::get('AS_INDEX_PRODUCT_NO_STOCK'),
+            'AS_FIELDS_SUPPLIER_REFERENCES' => Configuration::get('AS_FIELDS_SUPPLIER_REFERENCES'),
         );
         foreach ($this->context->controller->getLanguages() as $language) {
             $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);
@@ -364,32 +383,21 @@ class Apisearch extends Module
 
     public function hookHeader()
     {
-        if ($this->connection->isProperlyConfigured()) {
-            $displaySearchBar = Configuration::get('AS_DISPLAY_SEARCH_BAR');
-            if (!$displaySearchBar) {
-                return;
-            }
-
-            $admin_url = Configuration::get('AS_ADMIN_URL');
-            $admin_url = $admin_url == ""
-                ? ApisearchDefaults::DEFAULT_AS_ADMIN_URL
-                : $admin_url;
-            
-            $user_id = Context::getContext()->customer->id;
-            if($user_id == null){
-                $user_id = Context::getContext()->cart->id_guest;
-                $token = sha1('apisearch'. $user_id . $_SERVER['REMOTE_ADDR']. date('Y-m-d'));
-            }else{
-                $token = sha1('apisearch'. $user_id);
-            }
-            
-            $this->context->smarty->assign(array(
-                'apisearch_admin_url' => $admin_url,
-                'apisearch_user_token' => $token,
-                'apisearch_index_id' => Configuration::get('AS_INDEX', Context::getContext()->language->id),
-            ));
-            return $this->display(__FILE__, 'views/templates/front/search.tpl');
+        $indexId = Configuration::get('AS_INDEX', Context::getContext()->language->id);
+        if (empty($indexId)) {
+            return;
         }
+
+        $displaySearchBar = Configuration::get('AS_DISPLAY_SEARCH_BAR');
+        if (!$displaySearchBar) {
+            return;
+        }
+
+        $this->context->smarty->assign(array(
+            'apisearch_admin_url' => ApisearchDefaults::DEFAULT_AS_ADMIN_URL,
+            'apisearch_index_id' => Configuration::get('AS_INDEX', Context::getContext()->language->id),
+        ));
+        return $this->display(__FILE__, 'views/templates/front/search.tpl');
     }
 
     /**

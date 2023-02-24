@@ -2,7 +2,7 @@
 <link href="https://cdn.jsdelivr.net" rel="dns-prefetch" crossOrigin="anonymous">
 <script
 		type="application/javascript"
-		src='{$apisearch_admin_url}/{$apisearch_index_id}.iframe.min.js?'
+		src='{$apisearch_admin_url}/{$apisearch_index_id}.layer.js'
 		charSet='UTF-8'
 		crossOrigin="anonymous"
 ></script>

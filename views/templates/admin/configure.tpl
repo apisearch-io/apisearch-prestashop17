@@ -24,6 +24,16 @@
 *  International Registered Trademark & Property of PrestaShop SA
 *}
 
+<script type="application/javascript">
+  $(document).on('click', 'label[for="AS_REAL_TIME_INDEXATION_on"]', function() {
+    $('.real-time').removeClass('hidden');
+  });
+
+  $(document).on('click', '#AS_REAL_TIME_INDEXATION_off', function() {
+    $('.real-time').addClass('hidden');
+  });
+</script>
+
 {if Configuration::get('AS_APP')}
   <div id="as-sync-container">
     <button id="as-sync">{l s='Sync Products' mod='apisearch'}</button>
@@ -102,6 +112,10 @@
       box-shadow: none;
     }
     #as-sync-container #as-ajax {
+      display: none;
+    }
+
+    .hidden {
       display: none;
     }
   </style>

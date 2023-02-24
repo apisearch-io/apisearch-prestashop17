@@ -41,7 +41,7 @@ class ApisearchConnection
         }
 
         $clusterUrl = \Configuration::get('AS_CLUSTER_URL');
-        $clusterUrl = $clusterUrl == "" ? ApisearchDefaults::DEFAULT_AS_CLUSTER_URL : $clusterUrl;
+        $clusterUrl = empty($clusterUrl) ? ApisearchDefaults::DEFAULT_AS_CLUSTER_URL : $clusterUrl;
 
 
         $appId = \Configuration::get('AS_APP');
