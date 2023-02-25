@@ -94,7 +94,9 @@ class ApisearchExporter
         foreach ($productsIdByShopId as $shopId => $productsId) {
             $this->builder->buildItems($productsId, $langId, $version, $bulkNumber, $shopId, function(array $items) use (&$allItems) {
                 foreach ($items as $item) {
-                    echo json_encode($item) . PHP_EOL;
+                    echo json_encode($item);
+                    echo PHP_EOL;
+                    ob_flush();
                 }
             });
         }

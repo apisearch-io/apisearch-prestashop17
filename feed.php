@@ -41,6 +41,9 @@ use Apisearch\Model\ApisearchBuilder;
 
 require_once __DIR__ . '/apisearch.php';
 
+ob_end_clean();
+header('Content-Type:text/plain; charset=utf-8');
+
 try {
     $exporter = new ApisearchExporter(
         new ApisearchBuilder(),
