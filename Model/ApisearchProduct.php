@@ -27,7 +27,7 @@ class ApisearchProduct
             ORDER BY id_product ASC
             LIMIT $start,$limit";
 
-        return \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        return \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
     }
 
     /**
@@ -63,7 +63,7 @@ class ApisearchProduct
             GROUP BY p.id_product;
         ";
 
-        $products = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $products = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
         $productsIndexedById = [];
         $manufacturers = ApisearchManufacturer::getManufacturers(array_column($products, 'id_manufacturer'));
         foreach ($products as $product) {
@@ -97,7 +97,7 @@ class ApisearchProduct
             GROUP BY p.id_product
         ";
 
-        $products = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $products = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
 
         foreach ($products as $groupsProduct) {
             $productId = $groupsProduct['id_product'];
@@ -192,7 +192,7 @@ class ApisearchProduct
             LEFT JOIN `{$prefix}image` i ON (i.`id_image` = pai.`id_image`) AND i.cover = 1
             WHERE pa.`id_product` = $productId";
 
-        $res = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $res = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
 
         //Get quantity of each variation
         foreach ($res as $key => $row) {

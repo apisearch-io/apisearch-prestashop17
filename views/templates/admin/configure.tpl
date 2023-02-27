@@ -35,12 +35,6 @@
 </script>
 
 {if Configuration::get('AS_APP')}
-  <div id="as-sync-container">
-    <button id="as-sync">{l s='Sync Products' mod='apisearch'}</button>
-    <span id="as-ajax" class="hidden-xs">
-      <i class="icon-refresh icon-spin icon-fw"></i>
-    </span>
-  </div>
   {if Shop::isFeatureActive()}
     {assign var=shopAsso value=Configuration::get('AS_SHOP')|json_decode:1}
     <script>

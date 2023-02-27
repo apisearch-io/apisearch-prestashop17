@@ -50,8 +50,8 @@ try {
         new ApisearchConnection()
     );
 
-    $langId = Tools::getValue('lang');
-    $items = $exporter->printItems($langId);
+    $langIsoCode = Tools::getValue('lang');
+    $exporter->printItemsByShopAndLang(\Context::getContext()->shop->id, $langIsoCode);
 
 } catch (\Throwable $exception) {
     syslog(0, $exception->getMessage());

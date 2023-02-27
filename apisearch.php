@@ -302,7 +302,7 @@ class Apisearch extends Module
                 ),
                 array(
                     'col' => 3,
-                    'form_group_class' => 'real-time',
+                    'form_group_class' => 'real-time ' . (Configuration::get('AS_REAL_TIME_INDEXATION') ? '' : 'hidden'),
                     'type' => 'text',
                     'label' => $this->l('Apisearch Cluster Url'),
                     'name' => 'AS_CLUSTER_URL',
@@ -310,7 +310,7 @@ class Apisearch extends Module
                 ),
                 array(
                     'col' => Language::isMultiLanguageActivated($this->context->shop->id) ? 4 : 3,
-                    'form_group_class' => 'real-time',
+                    'form_group_class' => 'real-time ' . (Configuration::get('AS_REAL_TIME_INDEXATION') ? '' : 'hidden'),
                     'type' => 'text',
                     'label' => $this->l('Management token Hash ID'),
                     'name' => 'AS_TOKEN',

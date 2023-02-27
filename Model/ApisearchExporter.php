@@ -68,40 +68,46 @@ class ApisearchExporter
         );
     }
 
-    /**
-     * @param string $langIsoCode
-     */
-    public function printItems($langIsoCode)
+    public function printItemsByShopAndLang($shopId, $langIsoCode)
+    {
+        $count = 100;
+        $offset = 0;
+        $version = \strval(rand(1000000000, 9999999999));
+        $langId = $this->getLangIdByIsoCode($langIsoCode);
+
+        while (true) {
+            $products = ApisearchProduct::getProductsId($langId, $offset, $count, $shopId);
+
+            if (!empty($products)) {
+                $productsIds = array_map(function(array $product) {
+                    return $product['id_product'];
+                }, $products);
+
+                $this->builder->buildChunkItems($productsIds, $langId, $version, $shopId, function(array $items) use (&$allItems) {
+                    foreach ($items as $item) {
+                        echo json_encode($item);
+                        echo PHP_EOL;
+                        ob_flush();
+                    }
+                });
+
+                $count = count($products);
+                $offset = $offset + $count;
+            } else {
+                break;
+            }
+        }
+    }
+
+
+    public function getLangIdByIsoCode($langIsoCode)
     {
         $apisearchClients = self::getIndicesClientByLanguageIsoCode();
         if (!array_key_exists($langIsoCode, $apisearchClients)) {
             throw new \Exception('Language not found');
         }
 
-        $langId = $apisearchClients[$langIsoCode]['lang_id'];
-        $productsIdByShopId = self::getExportableProducts($langId);
-        if (empty($productsIdByShopId)) {
-            die;
-        }
-
-        /**
-         * Items
-         * Id_land
-         */
-        $version = \strval(rand(1000000000, 9999999999));
-        $bulkNumber = 100;
-        $allItems = [];
-        foreach ($productsIdByShopId as $shopId => $productsId) {
-            $this->builder->buildItems($productsId, $langId, $version, $bulkNumber, $shopId, function(array $items) use (&$allItems) {
-                foreach ($items as $item) {
-                    echo json_encode($item);
-                    echo PHP_EOL;
-                    ob_flush();
-                }
-            });
-        }
-
-        return $allItems;
+        return $apisearchClients[$langIsoCode]['lang_id'];
     }
 
     /**
