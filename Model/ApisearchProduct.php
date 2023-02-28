@@ -36,19 +36,26 @@ class ApisearchProduct
      *
      * @return mixed
      */
-    public static function getFullProductsById($productsId, $langId, $shopId)
+    public static function getFullProductsById(
+        $productsId,
+        $langId,
+        $shopId,
+        $loadSales,
+        $loadSuppliers
+    )
     {
         $prefix = _DB_PREFIX_;
         $productIdsAsString = implode(',', $productsId);
+
         $sql = "
             SELECT
                 p.*,
                 ps.advanced_stock_management,
                 im.id_image,
                 pl.*,
-                psale.quantity as sales,
+                " . ($loadSales ? 'psale.quantity as sales' : "0 as sales") .",
                 st.out_of_stock as real_out_of_stock,
-                group_concat(distinct psup.product_supplier_reference SEPARATOR '|') as supplier_referencies
+                " . ($loadSuppliers ? 'group_concat(distinct psup.product_supplier_reference SEPARATOR \'|\') as supplier_referencies' : "'' as supplier_referencies") ."
             FROM {$prefix}product p
                 LEFT JOIN {$prefix}product_lang `pl` ON p.`id_product` = pl.`id_product` AND pl.`id_lang` = $langId
                 LEFT JOIN {$prefix}product_shop `c` ON p.`id_product` = c.`id_product` AND c.`id_shop` = $shopId
@@ -56,9 +63,9 @@ class ApisearchProduct
                 LEFT JOIN {$prefix}image_shop im ON im.id_product = p.id_product AND im.cover = 1
                 LEFT JOIN {$prefix}image_lang iml ON im.id_image = iml.id_image AND iml.id_lang = $langId AND im.`id_shop` = $shopId
                 INNER JOIN {$prefix}product_shop product_shop ON (product_shop.id_product = p.id_product AND product_shop.id_shop = $shopId)
-                LEFT JOIN {$prefix}product_sale psale ON (psale.id_product = p.id_product)
+                " . ($loadSales ? "LEFT JOIN {$prefix}product_sale psale ON (psale.id_product = p.id_product)" : "") . "
                 LEFT JOIN {$prefix}stock_available st ON (st.id_product = p.id_product)
-                LEFT JOIN {$prefix}product_supplier psup ON (psup.id_product = psup.id_product)
+                " . ($loadSuppliers ? "LEFT JOIN {$prefix}product_supplier psup ON (psup.id_product = psup.id_product)" : "") . "
             WHERE p.id_product IN($productIdsAsString)
             GROUP BY p.id_product;
         ";
@@ -156,14 +163,12 @@ class ApisearchProduct
     }
 
     /**
-     * Get all available product attributes combinations.
-     *
-     * @param int $id_lang Language id
-     * @param bool $groupByIdAttributeGroup
-     *
-     * @return array Product attributes combinations
+     * @param $productId
+     * @param $id_lang
+     * @return array|bool|\mysqli_result|\PDOStatement|resource
+     * @throws \PrestaShopDatabaseException
      */
-    public static function getAttributeCombinations($productId, $id_lang, $groupByIdAttributeGroup = true)
+    public static function getAttributeCombinations($productId, $id_lang)
     {
         if (!\Combination::isFeatureActive()) {
             return [];

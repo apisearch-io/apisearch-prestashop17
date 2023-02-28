@@ -51,7 +51,12 @@ try {
     );
 
     $langIsoCode = Tools::getValue('lang');
-    $exporter->printItemsByShopAndLang(\Context::getContext()->shop->id, $langIsoCode);
+    $shopId = Tools::getValue('shop');
+    if (!$shopId) {
+        $shopId = \Context::getContext()->shop->id;
+    }
+
+    $exporter->printItemsByShopAndLang($shopId, $langIsoCode);
 
 } catch (\Throwable $exception) {
     syslog(0, $exception->getMessage());

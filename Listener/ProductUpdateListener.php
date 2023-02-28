@@ -20,21 +20,28 @@ class ProductUpdateListener implements EventSubscriberInterface
      */
     public function pushToApisearch(FilterResponseEvent $event)
     {
-        $hooks = new ApisearchHooks(
-            new ApisearchBuilder(),
-            new ApisearchConnection()
-        );
-        $request = $event->getRequest();
-        $controllerName = $request->attributes->get('_controller');
-        $method = $request->getMethod();
-        if (
-            $controllerName == "PrestaShopBundle\\Controller\\Admin\\ProductController::formAction" &&
-            $method !== "GET"
-        ) {
-            $productId = $request->get('id');
-            if (!empty($productId)) {
-                $hooks->putProductById($productId);
+        try {
+            $request = $event->getRequest();
+            $controllerName = $request->attributes->get('_controller');
+            $method = $request->getMethod();
+            if (
+                \Configuration::get('AS_REAL_TIME_INDEXATION') == 1 &&
+                $controllerName == "PrestaShopBundle\\Controller\\Admin\\ProductController::formAction" &&
+                $method !== "GET"
+            ) {
+                $productId = $request->get('id');
+
+                $hooks = new ApisearchHooks(
+                    new ApisearchBuilder(),
+                    new ApisearchConnection()
+                );
+
+                if (!empty($productId)) {
+                    $hooks->putProductById($productId);
+                }
             }
+        } catch (\Throwable $throwable) {
+            // An error here should not affect the whole process
         }
     }
 

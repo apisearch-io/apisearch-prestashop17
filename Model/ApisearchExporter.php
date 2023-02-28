@@ -74,6 +74,8 @@ class ApisearchExporter
         $offset = 0;
         $version = \strval(rand(1000000000, 9999999999));
         $langId = $this->getLangIdByIsoCode($langIsoCode);
+        $loadSales = \Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT') == 1;
+        $loadSuppliers = \Configuration::get('AS_FIELDS_SUPPLIER_REFERENCES') == 1;
 
         while (true) {
             $products = ApisearchProduct::getProductsId($langId, $offset, $count, $shopId);
@@ -83,7 +85,7 @@ class ApisearchExporter
                     return $product['id_product'];
                 }, $products);
 
-                $this->builder->buildChunkItems($productsIds, $langId, $version, $shopId, function(array $items) use (&$allItems) {
+                $this->builder->buildChunkItems($productsIds, $langId, $version, $shopId, $loadSales, $loadSuppliers, function(array $items) use (&$allItems) {
                     foreach ($items as $item) {
                         echo json_encode($item);
                         echo PHP_EOL;
@@ -91,7 +93,6 @@ class ApisearchExporter
                     }
                 });
 
-                $count = count($products);
                 $offset = $offset + $count;
             } else {
                 break;

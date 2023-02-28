@@ -41,16 +41,26 @@ class ApisearchBuilder
     }
 
     /**
-     * @param int[] $productsId
+     * @param          $productsId
      * @param          $langId
-     * @param string $version
+     * @param          $version
+     * @param          $shopId
+     * @param          $loadSales
+     * @param          $loadSuppliers
      * @param callable $flushCallable
-     *
-     * @return array
+     * @return void
      */
-    public function buildChunkItems($productsId, $langId, $version, $shopId, Callable $flushCallable)
+    public function buildChunkItems(
+        $productsId,
+        $langId,
+        $version,
+        $shopId,
+        $loadSales,
+        $loadSuppliers,
+        Callable $flushCallable
+    )
     {
-        $products = ApisearchProduct::getFullProductsById($productsId, $langId, $shopId);
+        $products = ApisearchProduct::getFullProductsById($productsId, $langId, $shopId, $loadSales, $loadSuppliers);
         $items = array_filter(array_map(function($product) use ($langId, $version) {
             return $this->buildItemFromProduct($product, $langId, $version);
         }, $products));
@@ -66,19 +76,29 @@ class ApisearchBuilder
      * @param int $productId
      * @param          $langId
      * @param string $version
+     * @param          $loadSales
+     * @param          $loadSuppliers
      * @param callable $flushCallable
      *
      * @return array
      *
      * @throw \Exception
      */
-    public function buildItem($productId, $langId, $version, $shopId, Callable $flushCallable)
+    public function buildItem(
+        $productId,
+        $langId,
+        $version,
+        $shopId,
+        $loadSales,
+        $loadSuppliers,
+        Callable $flushCallable
+    )
     {
         if (!isset($langId)) {
             $langId = \Context::getContext()->language->id;
         }
 
-        $products = ApisearchProduct::getFullProductsById([$productId], $langId, $shopId);
+        $products = ApisearchProduct::getFullProductsById([$productId], $langId, $shopId, $loadSales, $loadSuppliers);
         if (empty($products)) {
             throw new InvalidProductException();
         }
@@ -117,7 +137,6 @@ class ApisearchBuilder
         $img = $product['id_image'];
         $hasCombinations = \intval($product['cache_default_attribute'] ?? 0) > 0;
         $idProductAttribute = null;
-
         $categoriesName = array();
         foreach ($product['categories_id'] as $categoryId) {
             if ($categoryId == \Configuration::get('PS_ROOT_CATEGORY') || $categoryId == \Configuration::get('PS_HOME_CATEGORY'))
@@ -132,13 +151,13 @@ class ApisearchBuilder
         $attributes = array();
         $colors = [];
 
-        $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
         $combinationImg = null;
         $available = false;
 
         if ($hasCombinations) {
 
             $quantity = 0;
+            $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
 
             foreach ($combinations as $combination) {
                 $references[] = $combination['reference'] ?? null;

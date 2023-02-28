@@ -322,14 +322,7 @@ class Apisearch extends Module
             ),
         )
         );
-        if (Shop::isFeatureActive()) {
-            $configForm['form']['input'][] = array(
-                'col' => 4,
-                'type' => 'shop',
-                'label' => $this->l('Shop association'),
-                'name' => 'AS_SHOP',
-            );
-        }
+
         return $configForm;
     }
 
@@ -350,9 +343,7 @@ class Apisearch extends Module
             $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);
             $form_values['AS_TOKEN'][$language['id_lang']] = Configuration::get('AS_TOKEN', $language['id_lang']);
         }
-        if (Shop::isFeatureActive()) {
-            $form_values['AS_SHOP'] = Configuration::get('AS_SHOP');
-        }
+
         return $form_values;
     }
 
@@ -397,6 +388,7 @@ class Apisearch extends Module
             'apisearch_admin_url' => ApisearchDefaults::DEFAULT_AS_ADMIN_URL,
             'apisearch_index_id' => Configuration::get('AS_INDEX', Context::getContext()->language->id),
         ));
+
         return $this->display(__FILE__, 'views/templates/front/search.tpl');
     }
 
@@ -405,14 +397,18 @@ class Apisearch extends Module
      */
     public function hookActionObjectProductDeleteBefore($params)
     {
-        if (Configuration::get('AS_REAL_TIME_INDEXATION')) {
-            $objectId = $params['object']->id;
-            if (array_key_exists($objectId, $this->updates)) {
-                // return;
-            }
+        try {
+            if (Configuration::get('AS_REAL_TIME_INDEXATION')) {
+                $objectId = $params['object']->id;
+                if (array_key_exists($objectId, $this->updates)) {
+                    // return;
+                }
 
-            $this->hooks->deleteProductById($objectId);
-            $this->updates[$objectId] = true;
+                $this->hooks->deleteProductById($objectId);
+                $this->updates[$objectId] = true;
+            }
+        } catch (\Throwable $throwable) {
+            // An error here should not affect the whole process
         }
     }
 
@@ -421,17 +417,21 @@ class Apisearch extends Module
      */
     public function hookActionObjectOrderUpdateAfter($params)
     {
-        if (Configuration::get('AS_REAL_TIME_INDEXATION')) {
-            $order = new Order($params['object']->id);
-            $orderState = $order->getCurrentOrderState();
+        try {
+            if (Configuration::get('AS_REAL_TIME_INDEXATION')) {
+                $order = new Order($params['object']->id);
+                $orderState = $order->getCurrentOrderState();
 
-            if (Validate::isLoadedObject($order) && isset($orderState)) {
-                if ($order->valid) {
-                    foreach ($order->getProducts() as $product) {
-                        $this->hooks->putProductById($product['id_product']);
+                if (Validate::isLoadedObject($order) && isset($orderState)) {
+                    if ($order->valid) {
+                        foreach ($order->getProducts() as $product) {
+                            $this->hooks->putProductById($product['id_product']);
+                        }
                     }
                 }
             }
+        } catch (\Throwable $throwable) {
+            // An error here should not affect the whole process
         }
     }
 }

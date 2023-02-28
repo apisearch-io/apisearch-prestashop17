@@ -56,16 +56,20 @@ class ApisearchHooks
             if (false !== $apisearchClient) {
 
                 try {
+                    $loadSales = \Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT') == 1;
+                    $loadSuppliers = \Configuration::get('AS_FIELDS_SUPPLIER_REFERENCES') == 1;
                     $this->builder->buildItem(
                         $productId,
                         $lang['id_lang'],
                         '',
                         \Context::getContext()->shop->id,
-                    function(array $item) use ($apisearchClient) {
-                        $apisearchClient->putItems([$item]);
-                    });
+                        $loadSales,
+                        $loadSuppliers,
+                        function(array $item) use ($apisearchClient) {
+                            $apisearchClient->putItems([$item]);
+                        }
+                    );
                 } catch (InvalidProductException $_) {
-                    syslog(0, $_->getMessage());
                     $apisearchClient->deleteItems([[
                         'id' => $productId,
                         'type' => 'product'
