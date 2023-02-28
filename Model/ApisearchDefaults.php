@@ -19,4 +19,5 @@ class ApisearchDefaults {
     const DEFAULT_REAL_TIME_INDEXATION = false;
     const DEFAULT_AS_INDEX_PRODUCT_PURCHASE_COUNT = false;
     const DEFAULT_AS_INDEX_PRODUCT_NO_STOCK = false;
+    const AS_FIELDS_SUPPLIER_REFERENCES = false;
 }
