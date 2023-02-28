@@ -234,9 +234,9 @@ class ApisearchBuilder
                 'type' => 'product'
             ),
             'metadata' => array(
-                'name' => \strval($product['name']),
+                'title' => \strval($product['name']),
                 'url' => $url,
-                'img' => $image,
+                'image' => $image,
                 'old_price' => $oldPrice,
                 'supplier_reference' => $supplierReferences,
                 'show_price' => ($productAvailableForOrder || $product['show_price']), // Checks if the price must be shown
