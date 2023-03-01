@@ -2,6 +2,8 @@
 
 namespace Apisearch\Model;
 
+use PrestaShop\PrestaShop\Core\Localization\Locale;
+
 class ApisearchBuilder
 {
     private $avoidProductsWithoutImage;
@@ -125,11 +127,13 @@ class ApisearchBuilder
         if (!$product['active'] || !in_array($product['visibility'], ['search', 'both'])) {
             return false;
         }
-
         $productId = $product['id_product'];
         $productAvailableForOrder = $product['available_for_order'];
         $outOfStock = $product['real_out_of_stock'] ?? 1;
-
+/*
+        $currency = new \Currency(\Context::getContext()->currency->id);
+        $locale = \Context::getContext()->currentLocale;
+*/
         $references = array($product['reference']);
         $supplierReferences = $this->indexSupplierReferences ? $product['supplier_referencies'] : [];
         $eans = array($product['ean13']);
@@ -138,6 +142,10 @@ class ApisearchBuilder
         $hasCombinations = \intval($product['cache_default_attribute'] ?? 0) > 0;
         $idProductAttribute = null;
         $categoriesName = array();
+        $categoriesDepth0 = [];
+        $categoriesDepth1 = [];
+        $categoriesDepth2 = [];
+
         foreach ($product['categories_id'] as $categoryId) {
             if ($categoryId == \Configuration::get('PS_ROOT_CATEGORY') || $categoryId == \Configuration::get('PS_HOME_CATEGORY'))
                 continue;
@@ -145,6 +153,9 @@ class ApisearchBuilder
             $category = new \Category($categoryId, $langId);
             if (\Validate::isLoadedObject($category)) {
                 $categoriesName[] = $category->name;
+                if (\strval($category->level_depth) == "2") $categoriesDepth0[] = $category->name;
+                elseif (\strval($category->level_depth) == "3") $categoriesDepth1[] = $category->name;
+                elseif (\strval($category->level_depth) == "4") $categoriesDepth2[] = $category->name;
             }
         }
 
@@ -238,20 +249,25 @@ class ApisearchBuilder
                 'url' => $url,
                 'image' => $image,
                 'old_price' => $oldPrice,
+                // 'old_price_with_currency' => $locale->formatPrice($price, $currency->iso_code),
+                // 'price_with_currency' => $locale->formatPrice($oldPrice, $currency->iso_code) ,
                 'supplier_reference' => $supplierReferences,
                 'show_price' => ($productAvailableForOrder || $product['show_price']), // Checks if the price must be shown
             ),
-            'indexed_metadata' => array_merge(array(
+            'indexed_metadata' => array_merge(array_filter(array(
                 'as_version' => \intval($version),
                 'price' => \round($price, 2),
                 'categories' => $categoriesName,
+                'category_level_0' => $categoriesDepth0,
+                'category_level_1' => $categoriesDepth1,
+                'category_level_2' => $categoriesDepth2,
                 'available' => $available,
                 'with_discount' => $oldPrice - $price > 0,
                 'with_variants' => $hasCombinations,
                 'reference' => $references,
                 'ean' => $eans,
                 'upc' => $upcs,
-            ), $frontFeaturesKeyFixed),
+            )), $frontFeaturesKeyFixed),
             'searchable_metadata' => array(
                 'name' => \strval($product['name']),
                 'categories' => $categoriesName,
