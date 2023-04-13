@@ -78,6 +78,7 @@ class Apisearch extends Module
         Configuration::updateValue('AS_INDEX_PRODUCT_PURCHASE_COUNT', ApisearchDefaults::DEFAULT_AS_INDEX_PRODUCT_PURCHASE_COUNT);
         Configuration::updateValue('AS_INDEX_PRODUCT_NO_STOCK', ApisearchDefaults::DEFAULT_AS_INDEX_PRODUCT_NO_STOCK);
         Configuration::updateValue('AS_FIELDS_SUPPLIER_REFERENCES', ApisearchDefaults::AS_FIELDS_SUPPLIER_REFERENCES);
+        Configuration::updateValue('AS_INDEX_DESCRIPTIONS', ApisearchDefaults::DEFAULT_INDEX_DESCRIPTIONS);
 
         $meta_as = new Meta();
         $meta_as->page = 'module-apisearch-as_search';
@@ -112,6 +113,7 @@ class Apisearch extends Module
         Configuration::deleteByName('AS_REAL_TIME_INDEXATION');
         Configuration::deleteByName('AS_INDEX_PRODUCT_PURCHASE_COUNT');
         Configuration::deleteByName('AS_INDEX_PRODUCT_NO_STOCK');
+        Configuration::deleteByName('AS_INDEX_DESCRIPTIONS');
 
         $meta_as = Meta::getMetaByPage('module-apisearch-as_search', Context::getContext()->language->id);
         $meta_as = new Meta($meta_as['id_meta']);
@@ -279,7 +281,25 @@ class Apisearch extends Module
                     ),
                 ),
 
-
+                array(
+                    'col' => 3,
+                    'type' => 'switch',
+                    'label' => $this->l('Index short descriptions'),
+                    'name' => 'AS_INDEX_DESCRIPTIONS',
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('Yes')
+                        ),
+                        array(
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('No')
+                        )
+                    ),
+                ),
 
                 array(
                     'col' => 3,
@@ -300,6 +320,7 @@ class Apisearch extends Module
                         )
                     ),
                 ),
+
                 array(
                     'col' => 3,
                     'form_group_class' => 'real-time ' . (Configuration::get('AS_REAL_TIME_INDEXATION') ? '' : 'hidden'),
@@ -338,6 +359,7 @@ class Apisearch extends Module
             'AS_INDEX_PRODUCT_PURCHASE_COUNT' => Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT'),
             'AS_INDEX_PRODUCT_NO_STOCK' => Configuration::get('AS_INDEX_PRODUCT_NO_STOCK'),
             'AS_FIELDS_SUPPLIER_REFERENCES' => Configuration::get('AS_FIELDS_SUPPLIER_REFERENCES'),
+            'AS_INDEX_DESCRIPTIONS' => Configuration::get('AS_INDEX_DESCRIPTIONS'),
         );
         foreach ($this->context->controller->getLanguages() as $language) {
             $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);

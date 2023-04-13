@@ -23,7 +23,7 @@ class ApisearchProduct
             FROM {$prefix}product p
                      INNER JOIN {$prefix}product_shop ps ON ps.id_product = p.id_product ".($shopId ? "AND ps.id_shop = $shopId" : '') ."
                      LEFT JOIN {$prefix}product_lang pl ON p.id_product = pl.id_product
-            WHERE pl.`id_lang` = $langId AND ps.`visibility` IN ('both', 'catalog') AND ps.`active` = 1
+            WHERE pl.`id_lang` = $langId AND ps.`visibility` IN ('both', 'search') AND ps.`active` = 1
             ORDER BY id_product ASC
             LIMIT $start,$limit";
 

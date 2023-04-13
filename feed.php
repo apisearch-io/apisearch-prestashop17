@@ -51,10 +51,7 @@ try {
     );
 
     $langIsoCode = Tools::getValue('lang');
-    $shopId = Tools::getValue('shop');
-    if (!$shopId) {
-        $shopId = \Context::getContext()->shop->id;
-    }
+    $shopId = \Context::getContext()->shop->id;
 
     $exporter->printItemsByShopAndLang($shopId, $langIsoCode);
 

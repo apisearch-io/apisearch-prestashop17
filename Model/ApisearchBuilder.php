@@ -147,15 +147,27 @@ class ApisearchBuilder
         $categoriesDepth2 = [];
 
         foreach ($product['categories_id'] as $categoryId) {
-            if ($categoryId == \Configuration::get('PS_ROOT_CATEGORY') || $categoryId == \Configuration::get('PS_HOME_CATEGORY'))
+            if ($categoryId == \Configuration::get('PS_ROOT_CATEGORY') || $categoryId == \Configuration::get('PS_HOME_CATEGORY')) {
                 continue;
+            }
 
             $category = new \Category($categoryId, $langId);
             if (\Validate::isLoadedObject($category)) {
-                $categoriesName[] = $category->name;
-                if (\strval($category->level_depth) == "2") $categoriesDepth0[] = $category->name;
-                elseif (\strval($category->level_depth) == "3") $categoriesDepth1[] = $category->name;
-                elseif (\strval($category->level_depth) == "4") $categoriesDepth2[] = $category->name;
+                $categories = $category->getParentsCategories($langId);
+                foreach ($categories as $innerCategory) {
+                    $innerCategory = new \Category($innerCategory['id_category'], $langId);
+                    if (\Validate::isLoadedObject($innerCategory)) {
+
+                        if ($innerCategory->id == \Configuration::get('PS_ROOT_CATEGORY') || $innerCategory->id == \Configuration::get('PS_HOME_CATEGORY')) {
+                            continue;
+                        }
+
+                        $categoriesName[] = $innerCategory->name;
+                        if (\strval($innerCategory->level_depth) == "2") $categoriesDepth0[] = $innerCategory->name;
+                        elseif (\strval($innerCategory->level_depth) == "3") $categoriesDepth1[] = $innerCategory->name;
+                        elseif (\strval($innerCategory->level_depth) == "4") $categoriesDepth2[] = $innerCategory->name;
+                    }
+                }
             }
         }
 
@@ -238,6 +250,7 @@ class ApisearchBuilder
         $upcs = self::toArrayOfStrings($upcs);
         $references = self::toArrayOfStrings($references);
         $categoriesName = array_values(array_unique(array_filter($categoriesName)));
+        $description = \Configuration::get('AS_INDEX_DESCRIPTIONS') ? \strip_tags(\strval($product['description_short'])) : null;
 
         $itemAsArray = array(
             'uuid' => array(
@@ -271,7 +284,8 @@ class ApisearchBuilder
             'searchable_metadata' => array(
                 'name' => \strval($product['name']),
                 'categories' => $categoriesName,
-                'features' => self::toArrayOfStrings($frontFeaturesValues)
+                'features' => self::toArrayOfStrings($frontFeaturesValues),
+                'description' => $description,
             ),
             'suggest' => $categoriesName,
             'exact_matching_metadata' => array_values(array_filter(array_unique(array_merge(
