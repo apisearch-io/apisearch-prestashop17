@@ -2,7 +2,7 @@
 <module>
 	<name>apisearch</name>
 	<displayName><![CDATA[Apisearch]]></displayName>
-	<version><![CDATA[2.0.6]]></version>
+	<version><![CDATA[2.0.7]]></version>
 	<description><![CDATA[Search over your products, and give to your users unique, amazing and unforgettable experiences.]]></description>
 	<author><![CDATA[Apisearch Team]]></author>
 	<tab><![CDATA[search_filter]]></tab>

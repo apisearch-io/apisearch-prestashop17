@@ -68,7 +68,7 @@ class ApisearchExporter
         );
     }
 
-    public function printItemsByShopAndLang($shopId, $langIsoCode)
+    public function printItemsByShopAndLang($shopId, $langIsoCode, $debug)
     {
         $count = 100;
         $offset = 0;
@@ -85,13 +85,22 @@ class ApisearchExporter
                     return $product['id_product'];
                 }, $products);
 
+                if ($debug) {
+                    echo json_encode([
+                        'debug' => 'initial products list',
+                        'ids' => $productsIds
+                    ]);
+                    echo PHP_EOL;
+                    ob_flush();
+                }
+
                 $this->builder->buildChunkItems($productsIds, $langId, $version, $shopId, $loadSales, $loadSuppliers, function(array $items) use (&$allItems) {
                     foreach ($items as $item) {
                         echo json_encode($item);
                         echo PHP_EOL;
                         ob_flush();
                     }
-                });
+                }, $debug);
 
                 $offset = $offset + $count;
             } else {

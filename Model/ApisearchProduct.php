@@ -21,9 +21,12 @@ class ApisearchProduct
         $sql = "
             SELECT DISTINCT(p.id_product)
             FROM {$prefix}product p
-                     INNER JOIN {$prefix}product_shop ps ON ps.id_product = p.id_product ".($shopId ? "AND ps.id_shop = $shopId" : '') ."
+                     INNER JOIN {$prefix}product_shop ps ON ps.id_product = p.id_product AND ps.id_shop = $shopId
                      LEFT JOIN {$prefix}product_lang pl ON p.id_product = pl.id_product
-            WHERE pl.`id_lang` = $langId AND ps.`visibility` IN ('both', 'search') AND ps.`active` = 1
+            WHERE
+                pl.`id_lang` = $langId AND
+                ps.`visibility` IN ('both', 'search') AND
+                ps.`active` = 1
             ORDER BY id_product ASC
             LIMIT $start,$limit";
 
@@ -41,7 +44,8 @@ class ApisearchProduct
         $langId,
         $shopId,
         $loadSales,
-        $loadSuppliers
+        $loadSuppliers,
+        $debug = false
     )
     {
         $prefix = _DB_PREFIX_;
@@ -57,12 +61,10 @@ class ApisearchProduct
                 st.out_of_stock as real_out_of_stock,
                 " . ($loadSuppliers ? 'group_concat(distinct psup.product_supplier_reference SEPARATOR \'|\') as supplier_referencies' : "'' as supplier_referencies") ."
             FROM {$prefix}product p
-                LEFT JOIN {$prefix}product_lang `pl` ON p.`id_product` = pl.`id_product` AND pl.`id_lang` = $langId
-                LEFT JOIN {$prefix}product_shop `c` ON p.`id_product` = c.`id_product` AND c.`id_shop` = $shopId
-                LEFT JOIN {$prefix}product_shop ps ON ps.id_product = p.id_product
+                INNER JOIN {$prefix}product_shop ps ON ps.id_product = p.id_product AND ps.`id_shop` = $shopId
+                LEFT JOIN {$prefix}product_lang `pl` ON p.`id_product` = pl.`id_product` AND pl.`id_lang` = $langId AND pl.`id_shop` = $shopId
                 LEFT JOIN {$prefix}image_shop im ON im.id_product = p.id_product AND im.cover = 1
                 LEFT JOIN {$prefix}image_lang iml ON im.id_image = iml.id_image AND iml.id_lang = $langId AND im.`id_shop` = $shopId
-                INNER JOIN {$prefix}product_shop product_shop ON (product_shop.id_product = p.id_product AND product_shop.id_shop = $shopId)
                 " . ($loadSales ? "LEFT JOIN {$prefix}product_sale psale ON (psale.id_product = p.id_product)" : "") . "
                 LEFT JOIN {$prefix}stock_available st ON (st.id_product = p.id_product)
                 " . ($loadSuppliers ? "LEFT JOIN {$prefix}product_supplier psup ON (psup.id_product = psup.id_product)" : "") . "
@@ -83,6 +85,16 @@ class ApisearchProduct
                 $product['supplier_referencies'] = null;
             }
             $productsIndexedById[$product['id_product']] = $product;
+        }
+
+        if ($debug) {
+            echo json_encode([
+                'debug' => 'products hydrated',
+                'count' => count($productsIndexedById),
+                'ids' => array_keys($productsIndexedById)
+            ]);
+            echo PHP_EOL;
+            ob_flush();
         }
 
         $sql = "
@@ -157,6 +169,16 @@ class ApisearchProduct
                     }
                 }
             }
+        }
+
+        if ($debug) {
+            echo json_encode([
+                'debug' => 'products completed',
+                'count' => count($productsIndexedById),
+                'ids' => array_keys($productsIndexedById)
+            ]);
+            echo PHP_EOL;
+            ob_flush();
         }
 
         return $productsIndexedById;

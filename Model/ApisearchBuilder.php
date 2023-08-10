@@ -59,13 +59,24 @@ class ApisearchBuilder
         $shopId,
         $loadSales,
         $loadSuppliers,
-        Callable $flushCallable
+        Callable $flushCallable,
+        $debug = false
     )
     {
-        $products = ApisearchProduct::getFullProductsById($productsId, $langId, $shopId, $loadSales, $loadSuppliers);
+        $products = ApisearchProduct::getFullProductsById($productsId, $langId, $shopId, $loadSales, $loadSuppliers, $debug);
+
         $items = array_filter(array_map(function($product) use ($langId, $version) {
             return $this->buildItemFromProduct($product, $langId, $version);
         }, $products));
+
+        if ($debug) {
+            echo json_encode([
+                'debug' => 'products transformed',
+                'ids' => array_values(array_map(fn(array $item) => $item['uuid']['id'], $items))
+            ]);
+            echo PHP_EOL;
+            ob_flush();
+        }
 
         $items = array_filter($items);
 
@@ -124,16 +135,10 @@ class ApisearchBuilder
      */
     public function buildItemFromProduct($product, $langId, $version)
     {
-        if (!$product['active'] || !in_array($product['visibility'], ['search', 'both'])) {
-            return false;
-        }
         $productId = $product['id_product'];
         $productAvailableForOrder = $product['available_for_order'];
         $outOfStock = $product['real_out_of_stock'] ?? 1;
-/*
-        $currency = new \Currency(\Context::getContext()->currency->id);
-        $locale = \Context::getContext()->currentLocale;
-*/
+
         $references = array($product['reference']);
         $supplierReferences = $this->indexSupplierReferences ? $product['supplier_referencies'] : [];
         $eans = array($product['ean13']);
@@ -280,6 +285,7 @@ class ApisearchBuilder
                 'reference' => $references,
                 'ean' => $eans,
                 'upc' => $upcs,
+                'date_add' => \DateTime::createFromFormat('Y-m-d H:i:s', $product['date_add'])->format('U'),
             )), $frontFeaturesKeyFixed),
             'searchable_metadata' => array(
                 'name' => \strval($product['name']),
