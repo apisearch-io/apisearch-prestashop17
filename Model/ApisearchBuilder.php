@@ -72,7 +72,9 @@ class ApisearchBuilder
         if ($debug) {
             echo json_encode([
                 'debug' => 'products transformed',
-                'ids' => array_values(array_map(fn(array $item) => $item['uuid']['id'], $items))
+                'ids' => array_values(array_map(function(array $item) {
+                    return $item['uuid']['id'];
+                }, $items))
             ]);
             echo PHP_EOL;
             ob_flush();

@@ -13,7 +13,7 @@ class ApisearchDefaults {
 
     const DEFAULT_AS_API_VERSION = 'v1';
     const PLUGIN_NAME = 'apisearch';
-    const PLUGIN_VERSION = '2.0.7';
+    const PLUGIN_VERSION = '2.0.8';
 
     const DEFAULT_INDEX_PRODUCTS_WITHOUT_IMAGE = false;
     const DEFAULT_REAL_TIME_INDEXATION = false;
