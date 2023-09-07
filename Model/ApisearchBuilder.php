@@ -183,11 +183,15 @@ class ApisearchBuilder
 
         $combinationImg = null;
         $available = false;
+        $minPrice = null;
+        $maxPrice = null;
 
         if ($hasCombinations) {
 
             $quantity = 0;
             $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
+            $minPrice = 99999999999;
+            $maxPrice = -1;
 
             foreach ($combinations as $combination) {
                 $references[] = $combination['reference'] ?? null;
@@ -209,6 +213,22 @@ class ApisearchBuilder
                 if (!isset($attributes[$combination['group_name']]) || (isset($attributes[$combination['group_name']]) && !in_array($combination['attribute_name'], $attributes[$combination['group_name']]))) {
                     $attributes[$combination['group_name']][] = $combination['attribute_name'];
                 }
+
+                $combinationPrice = \Product::getPriceStatic($productId, true, $combination['id_product_attribute']);
+                if ($minPrice > $combinationPrice) {
+                    $minPrice = $combinationPrice;
+                }
+
+                if ($maxPrice < $combinationPrice) {
+                    $maxPrice = $combinationPrice;
+                }
+            }
+
+            $minPrice = \round($minPrice, 2);
+            $maxPrice = \round($maxPrice, 2);
+            if ($minPrice == $maxPrice) {
+                $minPrice = null;
+                $maxPrice = null;
             }
 
             // Only if we have stock, we are going to check availability
@@ -277,6 +297,8 @@ class ApisearchBuilder
             'indexed_metadata' => array_merge(array_filter(array(
                 'as_version' => \intval($version),
                 'price' => \round($price, 2),
+                'min_price' => $minPrice,
+                'max_price' => $maxPrice,
                 'categories' => $categoriesName,
                 'category_level_0' => $categoriesDepth0,
                 'category_level_1' => $categoriesDepth1,
