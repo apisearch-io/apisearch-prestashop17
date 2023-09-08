@@ -2,29 +2,29 @@
 
 namespace Apisearch\Model;
 
+use Apisearch\Context;
+
 class ApisearchProduct
 {
     /**
-     * @param $langId
      * @param $start
      * @param $limit
-     * @param $shopId
+     * @param Context $context
      */
     public static function getProductsId(
-        $langId,
         $start,
         $limit,
-        $shopId
+        Context $context
     )
     {
         $prefix = _DB_PREFIX_;
         $sql = "
             SELECT DISTINCT(p.id_product)
             FROM {$prefix}product p
-                     INNER JOIN {$prefix}product_shop ps ON ps.id_product = p.id_product AND ps.id_shop = $shopId
+                     INNER JOIN {$prefix}product_shop ps ON ps.id_product = p.id_product AND ps.id_shop = {$context->getShopId()}
                      LEFT JOIN {$prefix}product_lang pl ON p.id_product = pl.id_product
             WHERE
-                pl.`id_lang` = $langId AND
+                pl.`id_lang` = {$context->getLanguageId()} AND
                 ps.`visibility` IN ('both', 'search') AND
                 ps.`active` = 1
             ORDER BY id_product ASC
@@ -34,22 +34,19 @@ class ApisearchProduct
     }
 
     /**
-     * @param int[] $productsId
-     * @param $langId
-     *
-     * @return mixed
+     * @param $productsId
+     * @param Context $context
+     * @return array
+     * @throws \PrestaShopDatabaseException
      */
     public static function getFullProductsById(
         $productsId,
-        $langId,
-        $shopId,
-        $loadSales,
-        $loadSuppliers,
-        $debug = false
+        Context $context
     )
     {
         $prefix = _DB_PREFIX_;
         $productIdsAsString = implode(',', $productsId);
+        $langId = $context->getLanguageId();
 
         $sql = "
             SELECT
@@ -57,17 +54,17 @@ class ApisearchProduct
                 ps.advanced_stock_management,
                 im.id_image,
                 pl.*,
-                " . ($loadSales ? 'psale.quantity as sales' : "0 as sales") .",
+                " . ($context->isLoadSales() ? 'psale.quantity as sales' : "0 as sales") .",
                 st.out_of_stock as real_out_of_stock,
-                " . ($loadSuppliers ? 'group_concat(distinct psup.product_supplier_reference SEPARATOR \'|\') as supplier_referencies' : "'' as supplier_referencies") ."
+                " . ($context->isLoadSuppliers() ? 'group_concat(distinct psup.product_supplier_reference SEPARATOR \'|\') as supplier_referencies' : "'' as supplier_referencies") ."
             FROM {$prefix}product p
-                INNER JOIN {$prefix}product_shop ps ON ps.id_product = p.id_product AND ps.`id_shop` = $shopId
-                LEFT JOIN {$prefix}product_lang `pl` ON p.`id_product` = pl.`id_product` AND pl.`id_lang` = $langId AND pl.`id_shop` = $shopId
+                INNER JOIN {$prefix}product_shop ps ON ps.id_product = p.id_product AND ps.`id_shop` = {$context->getShopId()}
+                LEFT JOIN {$prefix}product_lang `pl` ON p.`id_product` = pl.`id_product` AND pl.`id_lang` = $langId AND pl.`id_shop` = {$context->getShopId()}
                 LEFT JOIN {$prefix}image_shop im ON im.id_product = p.id_product AND im.cover = 1
-                LEFT JOIN {$prefix}image_lang iml ON im.id_image = iml.id_image AND iml.id_lang = $langId AND im.`id_shop` = $shopId
-                " . ($loadSales ? "LEFT JOIN {$prefix}product_sale psale ON (psale.id_product = p.id_product)" : "") . "
+                LEFT JOIN {$prefix}image_lang iml ON im.id_image = iml.id_image AND iml.id_lang = $langId AND im.`id_shop` = {$context->getShopId()}
+                " . ($context->isLoadSales() ? "LEFT JOIN {$prefix}product_sale psale ON (psale.id_product = p.id_product)" : "") . "
                 LEFT JOIN {$prefix}stock_available st ON (st.id_product = p.id_product)
-                " . ($loadSuppliers ? "LEFT JOIN {$prefix}product_supplier psup ON (psup.id_product = psup.id_product)" : "") . "
+                " . ($context->isLoadSuppliers() ? "LEFT JOIN {$prefix}product_supplier psup ON (psup.id_product = psup.id_product)" : "") . "
             WHERE p.id_product IN($productIdsAsString)
             GROUP BY p.id_product;
         ";
@@ -87,7 +84,7 @@ class ApisearchProduct
             $productsIndexedById[$product['id_product']] = $product;
         }
 
-        if ($debug) {
+        if ($context->isDebug()) {
             echo json_encode([
                 'debug' => 'products hydrated',
                 'count' => count($productsIndexedById),
@@ -111,7 +108,7 @@ class ApisearchProduct
                 LEFT JOIN {$prefix}feature_product fp ON fp.id_product = p.id_product
                 LEFT JOIN {$prefix}feature_lang fl ON (fl.id_feature = fp.id_feature AND fl.id_lang = $langId)
                 LEFT JOIN {$prefix}feature_value_lang fvl ON (fvl.id_feature_value = fp.id_feature_value AND fvl.id_lang = $langId)
-                INNER JOIN {$prefix}product_shop product_shop ON (product_shop.id_product = p.id_product AND product_shop.id_shop = $shopId)
+                INNER JOIN {$prefix}product_shop product_shop ON (product_shop.id_product = p.id_product AND product_shop.id_shop = {$context->getShopId()})
             WHERE p.`id_product` IN($productIdsAsString)
             GROUP BY p.id_product
         ";
@@ -171,7 +168,7 @@ class ApisearchProduct
             }
         }
 
-        if ($debug) {
+        if ($context->isDebug()) {
             echo json_encode([
                 'debug' => 'products completed',
                 'count' => count($productsIndexedById),

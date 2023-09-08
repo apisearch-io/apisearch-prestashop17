@@ -23,19 +23,3 @@
 *  @license    http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  International Registered Trademark & Property of PrestaShop SA
 *}
-
-<script type="application/javascript">
-  $(document).on('click', 'label[for="AS_REAL_TIME_INDEXATION_on"]', function() {
-    $('.real-time').removeClass('hidden');
-  });
-
-  $(document).on('click', '#AS_REAL_TIME_INDEXATION_off', function() {
-    $('.real-time').addClass('hidden');
-  });
-</script>
-
-<style>
-  .hidden {
-    display: none;
-  }
-</style>

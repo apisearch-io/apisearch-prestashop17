@@ -36,8 +36,8 @@ require_once(dirname(__FILE__) . '../../../init.php');
 require_once __DIR__.'/vendor/autoload.php';
 
 use Apisearch\Model\ApisearchExporter;
-use Apisearch\Model\ApisearchConnection;
 use Apisearch\Model\ApisearchBuilder;
+use Apisearch\Context;
 
 require_once __DIR__ . '/apisearch.php';
 
@@ -45,16 +45,10 @@ ob_end_clean();
 header('Content-Type:text/plain; charset=utf-8');
 
 try {
-    $exporter = new ApisearchExporter(
-        new ApisearchBuilder(),
-        new ApisearchConnection()
-    );
+    $exporter = new ApisearchExporter(new ApisearchBuilder());
 
-    $langIsoCode = Tools::getValue('lang');
-    $debug = Tools::getValue('debug');
-    $shopId = \Context::getContext()->shop->id;
-
-    $exporter->printItemsByShopAndLang($shopId, $langIsoCode, $debug);
+    $context = Context::fromUrl();
+    $exporter->printItemsByShopAndLang($context);
 
 } catch (\Throwable $exception) {
     syslog(0, $exception->getMessage());

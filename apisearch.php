@@ -29,36 +29,23 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Apisearch\Model\ApisearchDefaults;
-use Apisearch\Model\ApisearchConnection;
-use Apisearch\Model\ApisearchHooks;
-use Apisearch\Model\ApisearchBuilder;
 
 require_once __DIR__.'/vendor/autoload.php';
 
 class Apisearch extends Module
 {
-    private $hooks;
-    private $connection;
-    protected $config_form = false;
-    private $updates = [];
-
     public function __construct()
     {
         $this->name = ApisearchDefaults::PLUGIN_NAME;
         $this->tab = 'search_filter';
         $this->version = ApisearchDefaults::PLUGIN_VERSION;
-        $this->author = 'Apisearch Team';
+        $this->author = 'Apisearch (https://apisearch.io)';
         $this->need_instance = 0;
         $this->bootstrap = true;
         parent::__construct();
         $this->displayName = $this->l('Apisearch');
-        $this->description = $this->l('Search over your products, and give to your users unique, amazing and unforgettable experiences.');
+        $this->description = $this->l('module_description');
         $this->ps_versions_compliancy = array('min' => '1.5', 'max' => _PS_VERSION_);
-        $this->connection = new ApisearchConnection();
-        $this->hooks = new ApisearchHooks(
-            new ApisearchBuilder(),
-            $this->connection
-        );
 
         if (!$this->isRegisteredInHook('actionUpdateQuantity')) {
             $this->registerHook('actionUpdateQuantity');
@@ -127,7 +114,7 @@ class Apisearch extends Module
 
     public function getContent()
     {
-        if (((bool)Tools::isSubmit('submitApisearchModule')) == true) {
+        if ((Tools::isSubmit('submitApisearchModule')) == true) {
             $this->postProcess();
         }
 
@@ -168,115 +155,116 @@ class Apisearch extends Module
     {
         $configForm = array('form' => array(
             'legend' => array(
-                'title' => $this->l('Settings'),
+                'title' => $this->l('settings'),
                 'icon' => 'icon-cogs',
             ),
             'input' => array(
                 array(
                     'col' => 3,
                     'type' => 'switch',
-                    'label' => $this->l('Display search bar'),
+                    'label' => $this->l('display_search_bar'),
                     'name' => 'AS_DISPLAY_SEARCH_BAR',
                     'is_bool' => true,
                     'values' => array(
                         array(
                             'id' => 'active_on',
                             'value' => 1,
-                            'label' => $this->l('Yes')
+                            'label' => $this->l('yes')
                         ),
                         array(
                             'id' => 'active_off',
                             'value' => 0,
-                            'label' => $this->l('No')
+                            'label' => $this->l('no')
                         )
                     ),
                 ),
                 array(
                     'col' => 3,
                     'type' => 'text',
-                    'label' => $this->l('App Hash ID'),
+                    'label' => $this->l('app_hash_id'),
                     'name' => 'AS_APP',
                 ),
                 array(
                     'col' => Language::isMultiLanguageActivated($this->context->shop->id) ? 4 : 3,
                     'type' => 'text',
-                    'label' => $this->l('Index Hash ID'),
+                    'label' => $this->l('index_hash_id'),
                     'name' => 'AS_INDEX',
                     'lang' => true
                 ),
                 array(
                     'col' => 3,
                     'type' => 'switch',
-                    'label' => $this->l('Index products without image'),
+                    'label' => $this->l('index_products_without_image'),
                     'name' => 'AS_INDEX_PRODUCTS_WITHOUT_IMAGE',
                     'is_bool' => true,
                     'values' => array(
                         array(
                             'id' => 'active_on',
                             'value' => 1,
-                            'label' => $this->l('Yes')
+                            'label' => $this->l('yes')
                         ),
                         array(
                             'id' => 'active_off',
                             'value' => 0,
-                            'label' => $this->l('No')
+                            'label' => $this->l('no')
                         )
                     ),
                 ),
                 array(
                     'col' => 3,
                     'type' => 'switch',
-                    'label' => $this->l('Index product purchase count'),
-                    'name' => 'AS_INDEX_PRODUCT_PURCHASE_COUNT',
-                    'is_bool' => true,
-                    'values' => array(
-                        array(
-                            'id' => 'active_on',
-                            'value' => 1,
-                            'label' => $this->l('Yes')
-                        ),
-                        array(
-                            'id' => 'active_off',
-                            'value' => 0,
-                            'label' => $this->l('No')
-                        )
-                    ),
-                ),
-                array(
-                    'col' => 3,
-                    'type' => 'switch',
-                    'label' => $this->l('Index non available products'),
+                    'label' => $this->l('index_non_available_products'),
                     'name' => 'AS_INDEX_PRODUCT_NO_STOCK',
                     'is_bool' => true,
                     'values' => array(
                         array(
                             'id' => 'active_on',
                             'value' => 1,
-                            'label' => $this->l('Yes')
+                            'label' => $this->l('yes')
                         ),
                         array(
                             'id' => 'active_off',
                             'value' => 0,
-                            'label' => $this->l('No')
+                            'label' => $this->l('no')
                         )
                     ),
                 ),
                 array(
                     'col' => 3,
                     'type' => 'switch',
-                    'label' => $this->l('Index supplier references'),
+                    'label' => $this->l('index_products_purchase_count'),
+                    'name' => 'AS_INDEX_PRODUCT_PURCHASE_COUNT',
+                    'desc' => $this->l('index_products_purchase_count_help'),
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('yes')
+                        ),
+                        array(
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('no')
+                        )
+                    ),
+                ),
+                array(
+                    'col' => 3,
+                    'type' => 'switch',
+                    'label' => $this->l('index_supplier_references'),
                     'name' => 'AS_FIELDS_SUPPLIER_REFERENCES',
                     'is_bool' => true,
                     'values' => array(
                         array(
                             'id' => 'active_on',
                             'value' => 1,
-                            'label' => $this->l('Yes')
+                            'label' => $this->l('yes')
                         ),
                         array(
                             'id' => 'active_off',
                             'value' => 0,
-                            'label' => $this->l('No')
+                            'label' => $this->l('no')
                         )
                     ),
                 ),
@@ -284,63 +272,36 @@ class Apisearch extends Module
                 array(
                     'col' => 3,
                     'type' => 'switch',
-                    'label' => $this->l('Index short descriptions'),
+                    'label' => $this->l('index_short_descriptions'),
                     'name' => 'AS_INDEX_DESCRIPTIONS',
+                    'desc' => $this->l('index_short_descriptions_help'),
                     'is_bool' => true,
                     'values' => array(
                         array(
                             'id' => 'active_on',
                             'value' => 1,
-                            'label' => $this->l('Yes')
+                            'label' => $this->l('yes')
                         ),
                         array(
                             'id' => 'active_off',
                             'value' => 0,
-                            'label' => $this->l('No')
+                            'label' => $this->l('no')
                         )
                     ),
                 ),
-
-                array(
-                    'col' => 3,
-                    'type' => 'switch',
-                    'label' => $this->l('Real time indexation'),
-                    'name' => 'AS_REAL_TIME_INDEXATION',
-                    'is_bool' => true,
-                    'values' => array(
-                        array(
-                            'id' => 'active_on',
-                            'value' => 1,
-                            'label' => $this->l('Yes')
-                        ),
-                        array(
-                            'id' => 'active_off',
-                            'value' => 0,
-                            'label' => $this->l('No')
-                        )
-                    ),
-                ),
-
-                array(
-                    'col' => 3,
-                    'form_group_class' => 'real-time ' . (Configuration::get('AS_REAL_TIME_INDEXATION') ? '' : 'hidden'),
-                    'type' => 'text',
-                    'label' => $this->l('Apisearch Cluster Url'),
-                    'name' => 'AS_CLUSTER_URL',
-                    'placeholder' => ApisearchDefaults::DEFAULT_AS_CLUSTER_URL,
-                ),
-                array(
-                    'col' => Language::isMultiLanguageActivated($this->context->shop->id) ? 4 : 3,
-                    'form_group_class' => 'real-time ' . (Configuration::get('AS_REAL_TIME_INDEXATION') ? '' : 'hidden'),
-                    'type' => 'text',
-                    'label' => $this->l('Management token Hash ID'),
-                    'name' => 'AS_TOKEN',
-                    'lang' => true
-                ),
             ),
-            'submit' => array(
-                'title' => $this->l('Save'),
-            ),
+            'buttons' => array(
+                array(
+                    'type' => 'button',
+                    'title' => $this->l('go_to_admin'),
+                    'href' => 'https://apisearch.cloud',
+                ),
+                array(
+                    'type' => 'submit',
+                    'title' => $this->l('save'),
+                    'class' => 'pull-right',
+                )
+            )
         )
         );
 
@@ -412,48 +373,5 @@ class Apisearch extends Module
         ));
 
         return $this->display(__FILE__, 'views/templates/front/search.tpl');
-    }
-
-    /**
-     * @param $params
-     */
-    public function hookActionObjectProductDeleteBefore($params)
-    {
-        try {
-            if (Configuration::get('AS_REAL_TIME_INDEXATION')) {
-                $objectId = $params['object']->id;
-                if (array_key_exists($objectId, $this->updates)) {
-                    // return;
-                }
-
-                $this->hooks->deleteProductById($objectId);
-                $this->updates[$objectId] = true;
-            }
-        } catch (\Throwable $throwable) {
-            // An error here should not affect the whole process
-        }
-    }
-
-    /**
-     * @param $params
-     */
-    public function hookActionObjectOrderUpdateAfter($params)
-    {
-        try {
-            if (Configuration::get('AS_REAL_TIME_INDEXATION')) {
-                $order = new Order($params['object']->id);
-                $orderState = $order->getCurrentOrderState();
-
-                if (Validate::isLoadedObject($order) && isset($orderState)) {
-                    if ($order->valid) {
-                        foreach ($order->getProducts() as $product) {
-                            $this->hooks->putProductById($product['id_product']);
-                        }
-                    }
-                }
-            }
-        } catch (\Throwable $throwable) {
-            // An error here should not affect the whole process
-        }
     }
 }

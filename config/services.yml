@@ -1,8 +1,0 @@
-services:
-  _defaults:
-    public: true
-
-  Apisearch\Listener\ProductUpdateListener:
-    class: Apisearch\Listener\ProductUpdateListener
-    tags:
-      - { name: kernel.event_listener, event: kernel.response, method: pushToApisearch }

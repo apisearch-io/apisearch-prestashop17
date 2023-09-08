@@ -2,9 +2,9 @@
 <module>
 	<name>apisearch</name>
 	<displayName><![CDATA[Apisearch]]></displayName>
-	<version><![CDATA[2.0.9]]></version>
-	<description><![CDATA[Search over your products, and give to your users unique, amazing and unforgettable experiences.]]></description>
-	<author><![CDATA[Apisearch Team]]></author>
+	<version><![CDATA[2.1.0]]></version>
+	<description><![CDATA[Integrate Apisearch into your store for fast and effective searching, enhancing your user experience and boosting your sales.]]></description>
+	<author><![CDATA[Apisearch (https://apisearch.io)]]></author>
 	<tab><![CDATA[search_filter]]></tab>
 	<is_configurable>1</is_configurable>
 	<need_instance>1</need_instance>

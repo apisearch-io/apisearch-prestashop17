@@ -2,7 +2,7 @@
 
 namespace Apisearch\Model;
 
-use PrestaShop\PrestaShop\Core\Localization\Locale;
+use Apisearch\Context;
 
 class ApisearchBuilder
 {
@@ -22,54 +22,28 @@ class ApisearchBuilder
     }
 
     /**
-     * @param int[] $productsId
-     * @param          $langId
-     * @param string $version
-     * @param int $batch
-     * @param callable $flushCallable
-     *
-     * @return array
-     */
-    public function buildItems($productsId, $langId, $version, $batch, $shopId, Callable $flushCallable)
-    {
-        if (!isset($langId)) {
-            $langId = \Context::getContext()->language->id;
-        }
-
-        $chunks = array_chunk($productsId, $batch);
-        array_walk($chunks, function($productsId) use ($langId, $version, $shopId, $flushCallable) {
-            $this->buildChunkItems($productsId, $langId, $version, $shopId, $flushCallable);
-        });
-    }
-
-    /**
-     * @param          $productsId
-     * @param          $langId
-     * @param          $version
-     * @param          $shopId
-     * @param          $loadSales
-     * @param          $loadSuppliers
+     * @param $productsId
+     * @param $version
+     * @param Context $context
      * @param callable $flushCallable
      * @return void
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      */
     public function buildChunkItems(
         $productsId,
-        $langId,
         $version,
-        $shopId,
-        $loadSales,
-        $loadSuppliers,
-        Callable $flushCallable,
-        $debug = false
+        Context $context,
+        Callable $flushCallable
     )
     {
-        $products = ApisearchProduct::getFullProductsById($productsId, $langId, $shopId, $loadSales, $loadSuppliers, $debug);
+        $products = ApisearchProduct::getFullProductsById($productsId, $context);
 
-        $items = array_filter(array_map(function($product) use ($langId, $version) {
-            return $this->buildItemFromProduct($product, $langId, $version);
+        $items = array_filter(array_map(function($product) use ($version, $context) {
+            return $this->buildItemFromProduct($product, $version, $context);
         }, $products));
 
-        if ($debug) {
+        if ($context->isDebug()) {
             echo json_encode([
                 'debug' => 'products transformed',
                 'ids' => array_values(array_map(function(array $item) {
@@ -88,58 +62,19 @@ class ApisearchBuilder
     }
 
     /**
-     * @param int $productId
-     * @param          $langId
-     * @param string $version
-     * @param          $loadSales
-     * @param          $loadSuppliers
-     * @param callable $flushCallable
-     *
-     * @return array
-     *
-     * @throw \Exception
-     */
-    public function buildItem(
-        $productId,
-        $langId,
-        $version,
-        $shopId,
-        $loadSales,
-        $loadSuppliers,
-        Callable $flushCallable
-    )
-    {
-        if (!isset($langId)) {
-            $langId = \Context::getContext()->language->id;
-        }
-
-        $products = ApisearchProduct::getFullProductsById([$productId], $langId, $shopId, $loadSales, $loadSuppliers);
-        if (empty($products)) {
-            throw new InvalidProductException();
-        }
-
-        $product = reset($products);
-        $item = $this->buildItemFromProduct($product, $langId, $version);
-
-        if (empty($item)) {
-            throw new InvalidProductException();
-        }
-
-        $flushCallable($item);
-    }
-
-    /**
-     * @param array $product
-     * @param int $langId
-     * @param string $version
-     *
+     * @param $product
+     * @param $version
+     * @param Context $context
      * @return array|false
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
      */
-    public function buildItemFromProduct($product, $langId, $version)
+    public function buildItemFromProduct($product, $version, Context $context)
     {
         $productId = $product['id_product'];
         $productAvailableForOrder = $product['available_for_order'];
         $outOfStock = $product['real_out_of_stock'] ?? 1;
+        $langId = $context->getLanguageId();
 
         $references = array($product['reference']);
         $supplierReferences = $this->indexSupplierReferences ? $product['supplier_referencies'] : [];
@@ -214,7 +149,9 @@ class ApisearchBuilder
                     $attributes[$combination['group_name']][] = $combination['attribute_name'];
                 }
 
-                $combinationPrice = \Product::getPriceStatic($productId, true, $combination['id_product_attribute']);
+                $combinationPrice = \Product::getPriceStatic($productId, $context->isWithTax(), $combination['id_product_attribute']);
+                $combinationPrice = \Tools::convertPrice($combinationPrice, $context->getCurrency());
+                $combinationPrice = \round($combinationPrice, 2);
                 if ($minPrice > $combinationPrice) {
                     $minPrice = $combinationPrice;
                 }
@@ -258,9 +195,11 @@ class ApisearchBuilder
 
         $url = \Context::getContext()->link->getProductLink($productId, null, null, null, $langId);
         $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
-        $price = \Product::getPriceStatic($productId, true, $idProductAttribute);
+        $price = \Product::getPriceStatic($productId, $context->isWithTax(), $idProductAttribute);
+        $price = \Tools::convertPrice($price, $context->getCurrency());
         $price = \round($price, 2);
-        $oldPrice = \Product::getPriceStatic($productId, true, $idProductAttribute, 6, null, false, false);
+        $oldPrice = \Product::getPriceStatic($productId, $context->isWithTax(), $idProductAttribute, 6, null, false, false);
+        $oldPrice = \Tools::convertPrice($oldPrice, $context->getCurrency());
         $oldPrice = \round($oldPrice, 2);
 
         $frontFeatures = $product['front_features'] ?? null;
@@ -289,8 +228,8 @@ class ApisearchBuilder
                 'url' => $url,
                 'image' => $image,
                 'old_price' => $oldPrice,
-                // 'old_price_with_currency' => $locale->formatPrice($price, $currency->iso_code),
-                // 'price_with_currency' => $locale->formatPrice($oldPrice, $currency->iso_code) ,
+                'old_price_with_currency' => \Tools::displayPrice($oldPrice, $context->getCurrency()),
+                'price_with_currency' => \Tools::displayPrice($price, $context->getCurrency()),
                 'supplier_reference' => $supplierReferences,
                 'show_price' => ($productAvailableForOrder || $product['show_price']), // Checks if the price must be shown
             ),
