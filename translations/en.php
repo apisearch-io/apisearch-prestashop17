@@ -4,7 +4,6 @@ global $_MODULE;
 $_MODULE = array();
 $_MODULE['<{apisearch}prestashop>apisearch_2e5d8aa3dfa8ef34ca5131d20f9dad51'] = 'Settings';
 $_MODULE['<{apisearch}prestashop>apisearch_06aa87356105700329a9636114d765a2'] = 'Display search bar';
-$_MODULE['<{apisearch}prestashop>apisearch_ba518ec1f8376250f942befcd4491534'] = 'App Hash ID';
 $_MODULE['<{apisearch}prestashop>apisearch_ec186d203e9a72d3bbef34250ed99cb9'] = 'Index Hash ID';
 $_MODULE['<{apisearch}prestashop>apisearch_a41071261328cc8380ef9c12763e6fee'] = 'Index products without image';
 $_MODULE['<{apisearch}prestashop>apisearch_9ed94ae3bcdde1900ec69fd9d6e76b50'] = 'Index non available products';

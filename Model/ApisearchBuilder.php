@@ -3,6 +3,9 @@
 namespace Apisearch\Model;
 
 use Apisearch\Context;
+use Apisearch\Rates\Rate;
+use Apisearch\Rates\Rating;
+use Apisearch\Rates\SteavisgarantisRates;
 
 class ApisearchBuilder
 {
@@ -38,6 +41,12 @@ class ApisearchBuilder
     )
     {
         $products = ApisearchProduct::getFullProductsById($productsId, $context);
+        $rates = Rating::getRatings($context, $productsId);
+        foreach ($products as $key => $product) {
+            if (array_key_exists($product['id_product'], $rates)) {
+                $products[$key]['rate'] = $rates[$product['id_product']];
+            }
+        }
 
         $items = array_filter(array_map(function($product) use ($version, $context) {
             return $this->buildItemFromProduct($product, $version, $context);
@@ -263,6 +272,14 @@ class ApisearchBuilder
                 $supplierReferences ?? []
             ))))
         );
+
+        if (
+            array_key_exists('rate', $product) &&
+            $product['rate'] instanceof Rate
+        ) {
+            $itemAsArray['metadata']['review_count'] = $product['rate']->getNb();
+            $itemAsArray['indexed_metadata']['review_stars'] = $product['rate']->getRate();
+        }
 
         $colors = array_filter($colors, function($value) {
             return is_string($value) && !empty($value);

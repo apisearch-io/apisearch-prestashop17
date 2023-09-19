@@ -179,12 +179,6 @@ class Apisearch extends Module
                     ),
                 ),
                 array(
-                    'col' => 3,
-                    'type' => 'text',
-                    'label' => $this->l('app_hash_id'),
-                    'name' => 'AS_APP',
-                ),
-                array(
                     'col' => Language::isMultiLanguageActivated($this->context->shop->id) ? 4 : 3,
                     'type' => 'text',
                     'label' => $this->l('index_hash_id'),

@@ -24,34 +24,6 @@
  * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  *  International Registered Trademark & Property of PrestaShop SA
  */
-set_time_limit(1800);
 
-/**
- * We suppress all possible incoming output data to avoid malformed feed
- */
-ob_start();
-
-require_once(dirname(__FILE__) . '../../../config/config.inc.php');
-require_once(dirname(__FILE__) . '../../../init.php');
-require_once __DIR__.'/vendor/autoload.php';
-
-use Apisearch\Model\ApisearchExporter;
-use Apisearch\Model\ApisearchBuilder;
-use Apisearch\Context;
-use Apisearch\Rates\Rating;
-
-require_once __DIR__ . '/apisearch.php';
-
-ob_end_clean();
-header('Content-Type:text/plain; charset=utf-8');
-
-try {
-    Rating::load();
-    $exporter = new ApisearchExporter(new ApisearchBuilder());
-
-    $context = Context::fromUrl();
-    $exporter->printItemsByShopAndLang($context);
-
-} catch (\Throwable $exception) {
-    syslog(0, $exception->getMessage());
-}
+header('Access-Control-Allow-Origin: *');
+http_response_code(204);
