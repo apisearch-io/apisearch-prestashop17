@@ -180,9 +180,7 @@ class ApisearchBuilder
             // Only if we have stock, we are going to check availability
             if ($quantity > 0) {
                 foreach ($combinations as $combination) {
-                    $minimalQuantity = $combination['minimal_quantity'];
-                    $idProductAttribute = $combination['id_product_attribute'];
-                    $available = $available || $this->getAvailability($productId, $productAvailableForOrder, $outOfStock, $minimalQuantity, $idProductAttribute);
+                    $available = $available || $this->getAvailability($productId, $productAvailableForOrder, $outOfStock, $combination['minimal_quantity'], $combination['id_product_attribute']);
                 }
             }
 
