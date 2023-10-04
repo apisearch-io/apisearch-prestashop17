@@ -262,6 +262,7 @@ class ApisearchBuilder
                 'categories' => $categoriesName,
                 'features' => self::toArrayOfStrings($frontFeaturesValues),
                 'description' => $description,
+                'tags' => $product['tags'] ?? array()
             ),
             'suggest' => $categoriesName,
             'exact_matching_metadata' => array_values(array_filter(array_unique(array_merge(
