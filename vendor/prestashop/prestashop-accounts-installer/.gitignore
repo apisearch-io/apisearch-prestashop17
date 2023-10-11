@@ -1,0 +1,7 @@
+### IDE ###
+.idea
+
+### composer ###
+vendor
+composer-dev.json
+composer-dev.lock

@@ -1,0 +1,28 @@
+services:
+  _defaults:
+    public: true
+
+  ##############
+  # Your Module
+
+  apisearch.module:
+    class: apisearch
+    factory: ['Module', 'getInstanceByName']
+    arguments:
+      - 'apisearch'
+
+  apisearch.context:
+    class: Context
+    factory: ['Context', 'getContext']
+
+  #####################
+  # PrestaShop Account
+  apisearch.ps_accounts_installer:
+    class: 'PrestaShop\PsAccountsInstaller\Installer\Installer'
+    arguments:
+      - '5.0'
+
+  apisearch.ps_accounts_facade:
+    class: 'PrestaShop\PsAccountsInstaller\Installer\Facade\PsAccounts'
+    arguments:
+      - '@apisearch.ps_accounts_installer'

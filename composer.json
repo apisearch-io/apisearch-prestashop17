@@ -1,5 +1,13 @@
 {
     "name": "apisearch-io/prestashop17-module",
+    "require-dev": {
+        "prestashop/php-dev-tools": "^4.2.1"
+    },
+    "require": {
+        "php": ">=5.6",
+        "prestashop/prestashop-accounts-installer": "^1.0",
+        "prestashop/module-lib-service-container": "^1.4"
+    },
     "autoload": {
         "psr-4": {
             "Apisearch\\": "."
@@ -11,7 +19,10 @@
     },
     "config": {
         "preferred-install": "dist",
+        "optimize-autoloader": true,
         "prepend-autoloader": false
     },
-    "type": "prestashop-module"
+    "type": "prestashop-module",
+    "author": "PrestaShop",
+    "license": "MIT"
 }
