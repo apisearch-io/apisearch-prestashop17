@@ -1,0 +1,39 @@
+{
+    "name": "prestashop/module-lib-guzzle-adapter",
+    "description": "Plug modules to the Guzzle client available on a running shop",
+    "license": "AFL-3.0",
+    "autoload": {
+        "psr-4": {
+            "Prestashop\\ModuleLibGuzzleAdapter\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "PrestaShop SA",
+            "email": "contact@prestashop.com"
+        }
+    ],
+    "provide": {
+        "php-http/client-implementation": "1.0",
+        "psr/http-client-implementation": "1.0"
+    },
+    "require": {
+        "php": ">=5.6.0",
+        "psr/http-message": "^1.0",
+        "php-http/message": "^1.7",
+        "php-http/httplug": "~1.1",
+        "guzzlehttp/psr7": "~1.9"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5|^8.5|^5.7",
+        "prestashop/php-dev-tools": "^4.2|^3.16"
+    },
+    "scripts": {
+        "phpstan-g5": "vendor/bin/phpstan analyze -c tests/Guzzle5/phpstan.neon",
+        "phpstan-g7": "vendor/bin/phpstan analyze -c tests/Guzzle7/phpstan.neon",
+        "phpstan": [
+            "@phpstan-g5",
+            "@phpstan-g7"
+        ]
+    }
+}

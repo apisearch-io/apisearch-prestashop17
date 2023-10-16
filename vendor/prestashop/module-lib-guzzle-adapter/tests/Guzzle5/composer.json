@@ -1,0 +1,5 @@
+{
+    "require-dev": {
+        "guzzlehttp/guzzle": "^5.3.4"
+    }
+}

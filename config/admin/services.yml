@@ -26,3 +26,28 @@ services:
     class: 'PrestaShop\PsAccountsInstaller\Installer\Facade\PsAccounts'
     arguments:
       - '@apisearch.ps_accounts_installer'
+
+  #####################
+  # PrestaShop Billing
+
+  apisearch.ps_billings_context_wrapper:
+    class: 'PrestaShopCorp\Billing\Wrappers\BillingContextWrapper'
+    arguments:
+      - '@apisearch.ps_accounts_facade'
+      - '@apisearch.context'
+      - true # if true, enables the sandbox mode, if false or empty, disables it
+
+  apisearch.ps_billings_facade:
+    class: 'PrestaShopCorp\Billing\Presenter\BillingPresenter'
+    public: true
+    arguments:
+      - '@apisearch.ps_billings_context_wrapper'
+      - '@apisearch.module'
+
+  # Remove this if you do not need BillingService
+  apisearch.ps_billings_service:
+    class: 'PrestaShopCorp\Billing\Services\BillingService'
+    public: true
+    arguments:
+      - '@apisearch.ps_billings_context_wrapper'
+      - '@apisearch.module'

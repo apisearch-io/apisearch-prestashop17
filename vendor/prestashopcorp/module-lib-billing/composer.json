@@ -1,0 +1,27 @@
+{
+  "name": "prestashopcorp/module-lib-billing",
+  "type": "library",
+  "description": "Utility package to retrieve Built for PS context and more",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "PrestaShopCorp\\Billing\\": "src/"
+    },
+    "classmap": [
+      "src/"
+    ]
+  },
+  "require": {
+    "php": ">=5.6",
+    "prestashop/module-lib-guzzle-adapter": "0.6"
+  },
+  "require-dev": {
+    "prestashop/php-dev-tools": "^3",
+    "guzzlehttp/guzzle": "^5.3"
+  },
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true
+    }
+  }
+}

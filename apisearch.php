@@ -164,6 +164,23 @@ class Apisearch extends Module
             return '';
         }
 
+        /**********************
+         * PrestaShop Billing *
+         * *******************/
+
+        // Load the context for PrestaShop Billing
+        $billingFacade = $this->getService('apisearch.ps_billings_facade');
+        $partnerLogo = $this->getLocalPath() . 'views/img/apisearch-logo.png';
+
+        // PrestaShop Billing
+        Media::addJsDef($billingFacade->present([
+            'logo' => $partnerLogo,
+            'tosLink' => 'https://apisearch.io/terminos-y-condiciones.html',
+            'privacyLink' => 'https://apisearch.io/politica-de-privacidad.html',
+            // This field is deprecated, but must be provided to ensure backward compatibility
+            'emailSupport' => ''
+        ]));
+
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
 
         return $output . $this->renderForm();
