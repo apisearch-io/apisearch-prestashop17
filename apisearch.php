@@ -34,6 +34,11 @@ require_once __DIR__.'/vendor/autoload.php';
 
 class Apisearch extends Module
 {
+    /**
+     * @var ServiceContainer
+     */
+    private $container;
+
     public function __construct()
     {
         $this->name = ApisearchDefaults::PLUGIN_NAME;
@@ -49,6 +54,13 @@ class Apisearch extends Module
 
         if (!$this->isRegisteredInHook('actionUpdateQuantity')) {
             $this->registerHook('actionUpdateQuantity');
+        }
+
+        if ($this->container === null) {
+            $this->container = new \PrestaShop\ModuleLibServiceContainer\DependencyInjection\ServiceContainer(
+                $this->name,
+                $this->getLocalPath()
+            );
         }
     }
 
@@ -84,7 +96,9 @@ class Apisearch extends Module
             $this->registerHook('actionObjectProductUpdateAfter') &&
             $this->registerHook('actionObjectProductDeleteBefore') &&
             $this->registerHook('actionObjectOrderUpdateAfter') &&
-            $this->registerHook('actionUpdateQuantity');
+            $this->registerHook('actionUpdateQuantity') &&
+            $this->getService('apisearch.ps_accounts_installer')->install()
+        ;
     }
 
     public function uninstall()
@@ -119,6 +133,36 @@ class Apisearch extends Module
         }
 
         $this->context->smarty->assign('module_dir', Context::getContext()->link->getBaseLink() . ltrim($this->_path, '/'));
+
+        /*********************
+         * PrestaShop Account *
+         * *******************/
+
+        $accountsService = null;
+
+        try {
+            $accountsFacade = $this->getService('apisearch.ps_accounts_facade');
+            $accountsService = $accountsFacade->getPsAccountsService();
+        } catch (\PrestaShop\PsAccountsInstaller\Installer\Exception\InstallerException $e) {
+            $accountsInstaller = $this->getService('apisearch.ps_accounts_installer');
+            $accountsInstaller->install();
+            $accountsFacade = $this->getService('apisearch.ps_accounts_facade');
+            $accountsService = $accountsFacade->getPsAccountsService();
+        }
+
+        try {
+            Media::addJsDef([
+                'contextPsAccounts' => $accountsFacade->getPsAccountsPresenter()
+                    ->present($this->name),
+            ]);
+
+            // Retrieve the PrestaShop Account CDN
+            $this->context->smarty->assign('urlAccountsCdn', $accountsService->getAccountsCdn());
+
+        } catch (Exception $e) {
+            $this->context->controller->errors[] = $e->getMessage();
+            return '';
+        }
 
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
 
@@ -367,5 +411,17 @@ class Apisearch extends Module
         ));
 
         return $this->display(__FILE__, 'views/templates/front/search.tpl');
+    }
+
+    /**
+     * Retrieve the service
+     *
+     * @param string $serviceName
+     *
+     * @return mixed
+     */
+    public function getService($serviceName)
+    {
+        return $this->container->getService($serviceName);
     }
 }

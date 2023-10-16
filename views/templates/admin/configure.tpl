@@ -23,3 +23,13 @@
 *  @license    http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  International Registered Trademark & Property of PrestaShop SA
 *}
+<prestashop-accounts></prestashop-accounts>
+
+<script src="{$urlAccountsCdn|escape:'htmlall':'UTF-8'}" rel=preload></script>
+
+<script>
+    /*********************
+     * PrestaShop Account *
+     * *******************/
+    window?.psaccountsVue?.init();
+</script>

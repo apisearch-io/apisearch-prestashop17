@@ -1,0 +1,22 @@
+includes:
+	- %currentWorkingDirectory%/vendor/prestashop/php-dev-tools/phpstan/ps-module-extension.neon
+parameters:
+	autoload_files:
+		- /web/ps_accounts/vendor/autoload.php
+	checkMissingIterableValueType: false
+	reportUnmatchedIgnoredErrors: false
+	paths:
+		- ../../src
+	dynamicConstantNames:
+		- _PS_VERSION_
+	ignoreErrors:
+		- '#Result of \|\| is always false.#'
+		- '#Strict comparison using === between false and string will always evaluate to false.#'
+		- '#Call to static method getInstance\(\) on an unknown class PrestaShop\\PrestaShop\\Adapter\\SymfonyContainer.#'
+		- '#Method LinkCore::getAdminLink\(\) invoked with 4 parameters, 1-2 required.#'
+		- '#Class PrestaShop\\Module\\PsAccounts\\Presenter\\PsAccountsPresenter not found.#'
+		- '#Call to method get\(\) on an unknown class PrestaShop\\PrestaShop\\Adapter\\SymfonyContainer.#'
+		- '#Call to an undefined method object::generate\(\).#'
+		- '#Cannot call method getService\(\) on ModuleCore|false.#'
+
+	level: 7
