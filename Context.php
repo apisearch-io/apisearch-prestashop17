@@ -18,7 +18,7 @@ class Context
         $context->language = self::guessLanguage(\Tools::getValue('lang'));
         $context->debug = \Tools::getValue('debug', false);
         $context->shopId = \Tools::getValue('shop', \Context::getContext()->shop->id);
-        $context->withTax = \Tools::getValue('tax', 1) === "1";
+        $context->withTax = \Tools::getValue('tax', "1") === "1";
         $context->currency = self::guessCurrency(\Tools::getValue('currency'));
         $context->loadSales = \Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT') == 1;
         $context->loadSuppliers = \Configuration::get('AS_FIELDS_SUPPLIER_REFERENCES') == 1;
