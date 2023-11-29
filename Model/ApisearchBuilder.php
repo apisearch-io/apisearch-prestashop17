@@ -6,6 +6,7 @@ use Apisearch\Context;
 use Apisearch\Rates\Rate;
 use Apisearch\Rates\Rating;
 use Apisearch\Rates\SteavisgarantisRates;
+use PrestaShop\Module\FacetedSearch\Hook\Product;
 
 class ApisearchBuilder
 {
@@ -109,6 +110,10 @@ class ApisearchBuilder
                     $innerCategory = new \Category($innerCategory['id_category'], $langId);
                     if (\Validate::isLoadedObject($innerCategory)) {
 
+                        if ($innerCategory->active == "0") {
+                            continue;
+                        }
+
                         if ($innerCategory->id == \Configuration::get('PS_ROOT_CATEGORY') || $innerCategory->id == \Configuration::get('PS_HOME_CATEGORY')) {
                             continue;
                         }
@@ -129,6 +134,7 @@ class ApisearchBuilder
         $available = false;
         $minPrice = null;
         $maxPrice = null;
+        $finalImagesByColor = array();
 
         if ($hasCombinations) {
 
@@ -136,6 +142,7 @@ class ApisearchBuilder
             $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
             $minPrice = 99999999999;
             $maxPrice = -1;
+            $productAttributesId = array();
 
             foreach ($combinations as $combination) {
                 $references[] = $combination['reference'] ?? null;
@@ -143,9 +150,14 @@ class ApisearchBuilder
                 $upcs[] = $combination['upc'] ?? null;
 
                 $quantity += \intval(($combination['quantity'] ?? 0));
-                $colors[] = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
+                $combinationColor = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
                     ? $combination['attribute_color']
                     : null;
+
+                if ($combinationColor) {
+                    $colors[] = $combinationColor;
+                    $productAttributesId[$combination['attribute_color']] = $combination['id_product_attribute'];
+                }
 
                 if (isset($combination['default_on'])) {
                     $idProductAttribute = $combination['id_product_attribute'];
@@ -182,6 +194,13 @@ class ApisearchBuilder
                 foreach ($combinations as $combination) {
                     $available = $available || $this->getAvailability($productId, $productAvailableForOrder, $outOfStock, $combination['minimal_quantity'], $combination['id_product_attribute']);
                 }
+            }
+
+            $combinationImages = ApisearchProduct::getImagesByProductAttributes(array_values($productAttributesId), $langId);
+            foreach ($productAttributesId as $colorHex => $attributeId) {
+                $finalImagesByColor[ltrim($colorHex, '#')] = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME,
+                    $combinationImages[$attributeId]
+                    , 'home_default');
             }
 
         } else {
@@ -239,6 +258,7 @@ class ApisearchBuilder
                 'price_with_currency' => \Tools::displayPrice($price, $context->getCurrency()),
                 'supplier_reference' => $supplierReferences,
                 'show_price' => ($productAvailableForOrder || $product['show_price']), // Checks if the price must be shown
+                'images_by_color' => $finalImagesByColor,
             ),
             'indexed_metadata' => array_merge(array_filter(array(
                 'as_version' => \intval($version),
