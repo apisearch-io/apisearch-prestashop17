@@ -209,7 +209,7 @@ class Apisearch extends Module
             'id_language' => $this->context->language->id,
         );
 
-        return $helper->generateForm(array($this->getConfigForm()));
+        return $helper->generateForm(array($this->getConfigForm())) . '<script>document.getElementById("go-to-admin").setAttribute("target", "_blank");</script>';
     }
 
     protected function getConfigForm()
@@ -350,6 +350,7 @@ class Apisearch extends Module
                     'type' => 'button',
                     'title' => $this->l('go_to_admin'),
                     'href' => 'https://apisearch.cloud',
+                    'id' => 'go-to-admin'
                 ),
                 array(
                     'type' => 'submit',
