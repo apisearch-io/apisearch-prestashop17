@@ -181,6 +181,7 @@ class Apisearch extends Module
             'emailSupport' => ''
         ]));
 
+        $this->context->smarty->assign('urlBilling', "https://unpkg.com/@prestashopcorp/billing-cdc/dist/bundle.js");
         $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
 
         return $output . $this->renderForm();
