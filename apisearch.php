@@ -89,6 +89,18 @@ class Apisearch extends Module
             return false;
         }
 
+        // Test if MBO is installed, if not, try to install it
+        $mboStatus = (new Prestashop\ModuleLibMboInstaller\Presenter)->present();
+        if(!$mboStatus["isInstalled"]) {
+            try {
+                $mboInstaller = new Prestashop\ModuleLibMboInstaller\Installer(_PS_VERSION_);
+                /** @var boolean */
+                $result = $mboInstaller->installModule();
+            } catch (\Exception $e) {
+                // Some errors can happen, i.e during initialization or download of the module
+            }
+        }
+
         return parent::install() &&
             $this->registerHook('header') &&
             $this->registerHook('top') &&
