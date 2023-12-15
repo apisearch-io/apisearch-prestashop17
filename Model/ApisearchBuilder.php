@@ -149,7 +149,8 @@ class ApisearchBuilder
                 $eans[] = $combination['ean13'] ?? null;
                 $upcs[] = $combination['upc'] ?? null;
 
-                $quantity += \intval(($combination['quantity'] ?? 0));
+                $combinationQuantity = \intval(($combination['quantity'] ?? 0));
+                $quantity += $combinationQuantity;
                 $combinationColor = ($combination['is_color_group'] === "1") && !empty($combination['attribute_color'])
                     ? $combination['attribute_color']
                     : null;
@@ -166,8 +167,13 @@ class ApisearchBuilder
                     }
                 }
 
-                if (!isset($attributes[$combination['group_name']]) || (isset($attributes[$combination['group_name']]) && !in_array($combination['attribute_name'], $attributes[$combination['group_name']]))) {
-                    $attributes[$combination['group_name']][] = $combination['attribute_name'];
+                if (
+                    $this->indexProductNoStock ||
+                    $combinationQuantity > 0
+                ) {
+                    if (!isset($attributes[$combination['group_name']]) || (isset($attributes[$combination['group_name']]) && !in_array($combination['attribute_name'], $attributes[$combination['group_name']]))) {
+                        $attributes[$combination['group_name']][] = $combination['attribute_name'];
+                    }
                 }
 
                 $combinationPrice = \Product::getPriceStatic($productId, $context->isWithTax(), $combination['id_product_attribute']);
