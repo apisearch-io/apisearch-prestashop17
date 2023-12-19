@@ -3,6 +3,7 @@
 		type="application/javascript"
 		src='{$apisearch_admin_url}/{$apisearch_index_id}.layer.js'
 		charSet='UTF-8'
+		async
 		crossOrigin="anonymous"
 ></script>
 
