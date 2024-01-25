@@ -90,6 +90,7 @@ class ApisearchBuilder
         $supplierReferences = $this->indexSupplierReferences ? $product['supplier_referencies'] : [];
         $eans = array($product['ean13']);
         $upcs = array($product['upc']);
+        $mpns = array($product['mpn'] ?? null);
         $img = $product['id_image'];
         $hasCombinations = \intval($product['cache_default_attribute'] ?? 0) > 0;
         $idProductAttribute = null;
@@ -148,6 +149,7 @@ class ApisearchBuilder
                 $references[] = $combination['reference'] ?? null;
                 $eans[] = $combination['ean13'] ?? null;
                 $upcs[] = $combination['upc'] ?? null;
+                $mpns[] = $combination['mpn'] ?? null;
 
                 $combinationQuantity = \intval(($combination['quantity'] ?? 0));
                 $quantity += $combinationQuantity;
@@ -246,6 +248,7 @@ class ApisearchBuilder
 
         $eans = self::toArrayOfStrings($eans);
         $upcs = self::toArrayOfStrings($upcs);
+        $mpns = self::toArrayOfStrings($mpns);
         $references = self::toArrayOfStrings($references);
         $categoriesName = array_values(array_unique(array_filter($categoriesName)));
         $description = \Configuration::get('AS_INDEX_DESCRIPTIONS') ? \strip_tags(\strval($product['description_short'])) : null;
@@ -281,6 +284,7 @@ class ApisearchBuilder
                 'reference' => $references,
                 'ean' => $eans,
                 'upc' => $upcs,
+                'mpn' => $mpns,
                 'date_add' => \DateTime::createFromFormat('Y-m-d H:i:s', $product['date_add'])->format('U'),
             )), $frontFeaturesKeyFixed),
             'searchable_metadata' => array(
@@ -293,7 +297,7 @@ class ApisearchBuilder
             'suggest' => $categoriesName,
             'exact_matching_metadata' => array_values(array_filter(array_unique(array_merge(
                 array($productId),
-                $references, $eans, $upcs,
+                $references, $eans, $upcs, $mpns,
                 $supplierReferences ?? []
             ))))
         );
