@@ -29,6 +29,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Apisearch\Model\ApisearchDefaults;
+use PrestaShop\PrestaShop\Core\Addon\Module\ModuleManagerBuilder;
 
 require_once __DIR__.'/vendor/autoload.php';
 
@@ -96,9 +97,14 @@ class Apisearch extends Module
                 $mboInstaller = new Prestashop\ModuleLibMboInstaller\Installer(_PS_VERSION_);
                 /** @var boolean */
                 $result = $mboInstaller->installModule();
+                // Call the installation of PrestaShop Integration Framework components
+                $this->installDependencies();
             } catch (\Exception $e) {
                 // Some errors can happen, i.e during initialization or download of the module
-            }
+                $this->context->controller->errors[] = $e->getMessage();
+                return 'Error during MBO installation';            }
+        } else {
+            $this->installDependencies();
         }
 
         return parent::install() &&
@@ -111,6 +117,34 @@ class Apisearch extends Module
             $this->registerHook('actionUpdateQuantity') &&
             $this->getService('apisearch.ps_accounts_installer')->install()
         ;
+    }
+
+    /**
+     * Install PrestaShop Integration Framework Components
+     */
+    public function installDependencies()
+    {
+        $moduleManager = ModuleManagerBuilder::getInstance()->build();
+
+        /* PS Account */
+        if (!$moduleManager->isInstalled("ps_accounts")) {
+            $moduleManager->install("ps_accounts");
+        } else if (!$moduleManager->isEnabled("ps_accounts")) {
+            $moduleManager->enable("ps_accounts");
+            $moduleManager->upgrade('ps_accounts');
+        } else {
+            $moduleManager->upgrade('ps_accounts');
+        }
+
+        /* Cloud Sync - PS Eventbus */
+        if (!$moduleManager->isInstalled("ps_eventbus")) {
+            $moduleManager->install("ps_eventbus");
+        } else if (!$moduleManager->isEnabled("ps_eventbus")) {
+            $moduleManager->enable("ps_eventbus");
+            $moduleManager->upgrade('ps_eventbus');
+        } else {
+            $moduleManager->upgrade('ps_eventbus');
+        }
     }
 
     public function uninstall()
