@@ -13,7 +13,7 @@ $_MODULE['<{apisearch}prestashop>apisearch_494a99d5c7c4053e8fdb56f5130d512f'] = 
 $_MODULE['<{apisearch}prestashop>apisearch_4036dd19fbe26f37e014bb88d89b41d4'] = 'Añadir descripciones cortas';
 $_MODULE['<{apisearch}prestashop>apisearch_499e16b57c50fe993a5bcb5e687a8fc5'] = 'En el caso de que en tus descripciones cortas haya contexto importante del producto, activa esta opción. Añadir la descripción puede, en muchos casos, disminuir la eficiencia de la búsqueda y la calidad de los resultados.';
 $_MODULE['<{apisearch}prestashop>apisearch_98ae660e070aac4118b4618ddb9134fd'] = 'Activar B2B';
-$_MODULE['<{apisearch}prestashop>apisearch_49279bc316963e9aff1db1460fd7526c'] = 'Muestra unos precios u otros en el buscador dependiendo del usuario que lo visualiza y del grupo al que perteneze. Funciona solo con grupo de usuarios.';
+$_MODULE['<{apisearch}prestashop>apisearch_49279bc316963e9aff1db1460fd7526c'] = 'Muestra unos precios u otros en el buscador dependiendo del usuario que lo visualiza y del grupo al que perteneze. Funciona solo con grupo de usuarios. Para testear, puedes forzar la visualización para un grupo de usuarios añadiendo el parámetro apisearch_group_id en la URL con el ID.';
 
 $_MODULE['<{apisearch}prestashop>apisearch_a6105c0a611b41b08f1209506350279e'] = 'Si';
 $_MODULE['<{apisearch}prestashop>apisearch_7fa3b767c460b54a2be4d49030b349c7'] = 'No';
