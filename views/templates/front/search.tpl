@@ -1,3 +1,9 @@
+{if null != $group_id}
+	{assign var='group_param' value='?user-type='|cat:$group_id}
+{else}
+	{assign var='group_param' value=''}
+{/if}
+
 <link href="https://eu1.apisearch.cloud" rel="dns-prefetch" crossOrigin="anonymous">
 <script
 		type="application/javascript"

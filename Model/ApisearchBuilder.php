@@ -14,6 +14,7 @@ class ApisearchBuilder
     private $indexProductPurchaseCount;
     private $indexProductNoStock;
     private $indexSupplierReferences;
+    private $idCountry;
 
     /**
      */
@@ -23,6 +24,8 @@ class ApisearchBuilder
         $this->indexProductPurchaseCount = \boolval(\Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT'));
         $this->indexProductNoStock = \boolval(\Configuration::get('AS_INDEX_PRODUCT_NO_STOCK'));
         $this->indexSupplierReferences = \boolval(\Configuration::get('AS_FIELDS_SUPPLIER_REFERENCES'));
+        $address = \Address::initialize();
+        $this->idCountry = $address->id_country;
     }
 
     /**
@@ -85,6 +88,7 @@ class ApisearchBuilder
         $productAvailableForOrder = $product['available_for_order'];
         $outOfStock = $product['real_out_of_stock'] ?? 1;
         $langId = $context->getLanguageId();
+        $isB2B = \Configuration::get('AS_B2B');
 
         $references = array($product['reference']);
         $supplierReferences = $this->indexSupplierReferences ? $product['supplier_referencies'] : [];
@@ -178,9 +182,9 @@ class ApisearchBuilder
                     }
                 }
 
-                $combinationPrice = \Product::getPriceStatic($productId, $context->isWithTax(), $combination['id_product_attribute']);
-                $combinationPrice = \Tools::convertPrice($combinationPrice, $context->getCurrency());
-                $combinationPrice = \round($combinationPrice, 2);
+                $combinationPriceGroup = $this->getProductPrices($context, $productId, $combination['id_product_attribute'], true);
+                $combinationPrice = $combinationPriceGroup[0];
+
                 if ($minPrice > $combinationPrice) {
                     $minPrice = $combinationPrice;
                 }
@@ -229,12 +233,14 @@ class ApisearchBuilder
 
         $url = \Context::getContext()->link->getProductLink($productId, null, null, null, $langId);
         $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
-        $price = \Product::getPriceStatic($productId, $context->isWithTax(), $idProductAttribute);
-        $price = \Tools::convertPrice($price, $context->getCurrency());
-        $price = \round($price, 2);
-        $oldPrice = \Product::getPriceStatic($productId, $context->isWithTax(), $idProductAttribute, 6, null, false, false);
-        $oldPrice = \Tools::convertPrice($oldPrice, $context->getCurrency());
-        $oldPrice = \round($oldPrice, 2);
+
+        $priceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, true);
+        $price = $priceGroup[0];
+        $priceWithCurrency = $priceGroup[1];
+
+        $oldPriceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, false);
+        $oldPrice = $oldPriceGroup[0];
+        $oldPriceWithCurrency = $oldPriceGroup[1];
 
         $frontFeatures = $product['front_features'] ?? null;
         $frontFeaturesKeyFixed = [];
@@ -253,6 +259,38 @@ class ApisearchBuilder
         $categoriesName = array_values(array_unique(array_filter($categoriesName)));
         $description = \Configuration::get('AS_INDEX_DESCRIPTIONS') ? \strip_tags(\strval($product['description_short'])) : null;
 
+        if ($isB2B) {
+            /**
+             * Groups
+             */
+            $groups = \Group::getGroups($context->getLanguageId(), $context->getShopId());
+            $users = [];
+            foreach ($groups as $group) {
+                $idGroup = $group['id_group'];
+                $groupPriceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, true, $idGroup);
+                $groupPrice = $groupPriceGroup[0];
+                $groupPriceWithCurrency = $groupPriceGroup[1];
+
+                $groupOldPriceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, false, $idGroup);
+                $groupOldPrice = $groupOldPriceGroup[0];
+                $groupOldPriceWithCurrency = $groupOldPriceGroup[1];
+
+                if (
+                    $price == $groupPrice &&
+                    $oldPrice == $groupOldPrice
+                ) {
+                    continue;
+                }
+
+                $users[$group['id_group']] = [
+                    'p' => $groupPrice,
+                    'pc' => $groupPriceWithCurrency,
+                    'op' => $groupOldPrice,
+                    'opc' => $groupOldPriceWithCurrency,
+                ];
+            }
+        }
+
         $itemAsArray = array(
             'uuid' => array(
                 'id' => \strval($productId),
@@ -263,15 +301,15 @@ class ApisearchBuilder
                 'url' => $url,
                 'image' => $image,
                 'old_price' => $oldPrice,
-                'old_price_with_currency' => \Tools::displayPrice($oldPrice, $context->getCurrency()),
-                'price_with_currency' => \Tools::displayPrice($price, $context->getCurrency()),
+                'old_price_with_currency' => $oldPriceWithCurrency,
+                'price_with_currency' => $priceWithCurrency,
                 'supplier_reference' => $supplierReferences,
                 'show_price' => ($productAvailableForOrder || $product['show_price']), // Checks if the price must be shown
                 'images_by_color' => $finalImagesByColor,
             ),
             'indexed_metadata' => array_merge(array_filter(array(
                 'as_version' => \intval($version),
-                'price' => \round($price, 2),
+                'price' => $price,
                 'min_price' => $minPrice,
                 'max_price' => $maxPrice,
                 'categories' => $categoriesName,
@@ -301,6 +339,10 @@ class ApisearchBuilder
                 $supplierReferences ?? []
             ))))
         );
+
+        if ($isB2B && !empty($users)) {
+            $itemAsArray['indexed_metadata']['_users'] = $users;
+        }
 
         if (
             array_key_exists('rate', $product) &&
@@ -411,5 +453,24 @@ class ApisearchBuilder
     private static function toArrayOfStrings(array $array) : array
     {
         return array_values(array_map('strval', array_unique(array_filter($array))));
+    }
+
+    private function getProductPrices(Context $context, $productId, $idProductAttribute, $reduction, $groupId = null)
+    {
+        if (!$groupId) {
+            $groupId = (int) \Configuration::get('PS_UNIDENTIFIED_GROUP');
+        }
+
+        $specPrice = true;
+        $price = \Product::priceCalculation(
+            $context->getShopId(), $productId, $idProductAttribute, $this->idCountry, 0, 0, $context->getCurrency()->id, $groupId, 1,
+            $context->isWithTax(), 6, false, $reduction, true, $specPrice, true
+        );
+
+        $price = \Tools::convertPrice($price, $context->getCurrency());
+        $price = \round($price, 2);
+        $priceWithCurrency = \Tools::displayPrice($price, $context->getCurrency());
+
+        return [$price, $priceWithCurrency];
     }
 }
