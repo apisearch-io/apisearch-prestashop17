@@ -79,6 +79,7 @@ class Apisearch extends Module
         Configuration::updateValue('AS_INDEX_PRODUCT_NO_STOCK', ApisearchDefaults::DEFAULT_AS_INDEX_PRODUCT_NO_STOCK);
         Configuration::updateValue('AS_FIELDS_SUPPLIER_REFERENCES', ApisearchDefaults::AS_FIELDS_SUPPLIER_REFERENCES);
         Configuration::updateValue('AS_INDEX_DESCRIPTIONS', ApisearchDefaults::DEFAULT_INDEX_DESCRIPTIONS);
+        Configuration::updateValue('AS_B2B', false);
 
         $meta_as = new Meta();
         $meta_as->page = 'module-apisearch-as_search';
@@ -161,6 +162,7 @@ class Apisearch extends Module
         Configuration::deleteByName('AS_INDEX_PRODUCT_PURCHASE_COUNT');
         Configuration::deleteByName('AS_INDEX_PRODUCT_NO_STOCK');
         Configuration::deleteByName('AS_INDEX_DESCRIPTIONS');
+        Configuration::deleteByName('AS_B2B');
 
         $meta_as = Meta::getMetaByPage('module-apisearch-as_search', Context::getContext()->language->id);
         $meta_as = new Meta($meta_as['id_meta']);
@@ -391,6 +393,26 @@ class Apisearch extends Module
                         )
                     ),
                 ),
+                array(
+                    'col' => 3,
+                    'type' => 'switch',
+                    'label' => $this->l('enable_b2b'),
+                    'name' => 'AS_B2B',
+                    'desc' => $this->l('enable_b2b_help'),
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('yes')
+                        ),
+                        array(
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('no')
+                        )
+                    ),
+                ),
             ),
             'buttons' => array(
                 array(
@@ -424,6 +446,7 @@ class Apisearch extends Module
             'AS_INDEX_PRODUCT_NO_STOCK' => Configuration::get('AS_INDEX_PRODUCT_NO_STOCK'),
             'AS_FIELDS_SUPPLIER_REFERENCES' => Configuration::get('AS_FIELDS_SUPPLIER_REFERENCES'),
             'AS_INDEX_DESCRIPTIONS' => Configuration::get('AS_INDEX_DESCRIPTIONS'),
+            'AS_B2B' => Configuration::get('AS_B2B'),
         );
         foreach ($this->context->controller->getLanguages() as $language) {
             $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);
@@ -470,9 +493,22 @@ class Apisearch extends Module
             return;
         }
 
+        $isB2B = Configuration::get('AS_B2B');
+        if ($isB2B) {
+            $currentIdGroup = \Tools::getValue('apisearch_group_id');
+            $currentIdGroup = empty($currentIdGroup)
+                ? $this->context->customer->id_default_group
+                : $currentIdGroup;
+        } else {
+            $currentIdGroup = null;
+        }
+
         $this->context->smarty->assign(array(
             'apisearch_admin_url' => ApisearchDefaults::DEFAULT_AS_ADMIN_URL,
             'apisearch_index_id' => Configuration::get('AS_INDEX', Context::getContext()->language->id),
+            'group_id' => $currentIdGroup != Configuration::get('PS_UNIDENTIFIED_GROUP')
+                ? $currentIdGroup
+                : null
         ));
 
         return $this->display(__FILE__, 'views/templates/front/search.tpl');

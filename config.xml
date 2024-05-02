@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <module>
-    <name>apisearch</name>
-    <displayName><![CDATA[Apisearch]]></displayName>
-    <version><![CDATA[2.1.6]]></version>
-    <description><![CDATA[Integrate Apisearch into your store for fast and effective searching, enhancing your user experience and boosting your sales.]]></description>
-    <author><![CDATA[Apisearch (https://apisearch.io)]]></author>
-    <tab><![CDATA[search_filter]]></tab>
-    <is_configurable>1</is_configurable>
-    <need_instance>0</need_instance>
-	<limited_countries></limited_countries>
+	<name>apisearch</name>
+	<displayName><![CDATA[Apisearch]]></displayName>
+	<version><![CDATA[2.2.1]]></version>
+	<description><![CDATA[Integrate Apisearch into your store for fast and effective searching, enhancing your user experience and boosting your sales.]]></description>
+	<author><![CDATA[Apisearch (https://apisearch.io)]]></author>
+	<tab><![CDATA[search_filter]]></tab>
+	<is_configurable>1</is_configurable>
+	<need_instance>1</need_instance>
 </module>

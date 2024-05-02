@@ -12,6 +12,8 @@ $_MODULE['<{apisearch}prestashop>apisearch_1a442debfe439990c007ba72d0b32beb'] = 
 $_MODULE['<{apisearch}prestashop>apisearch_494a99d5c7c4053e8fdb56f5130d512f'] = 'Add supplier references';
 $_MODULE['<{apisearch}prestashop>apisearch_4036dd19fbe26f37e014bb88d89b41d4'] = 'Add short descriptions';
 $_MODULE['<{apisearch}prestashop>apisearch_499e16b57c50fe993a5bcb5e687a8fc5'] = 'If in your short descriptions there is important product context, activate this option. Adding the description can, in many cases, decrease search efficiency and result quality.';
+$_MODULE['<{apisearch}prestashop>apisearch_98ae660e070aac4118b4618ddb9134fd'] = 'Enable B2B';
+$_MODULE['<{apisearch}prestashop>apisearch_49279bc316963e9aff1db1460fd7526c'] = 'Display specific prices for specific users depending on the group they belong. Works exclusively for user groups. Only for testing purposes, you can force a specific user groups search visualization by adding the URL parameter apisearch_group_id with its ID';
 
 
 $_MODULE['<{apisearch}prestashop>apisearch_a6105c0a611b41b08f1209506350279e'] = 'Yes';
