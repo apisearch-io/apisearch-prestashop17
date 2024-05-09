@@ -220,6 +220,20 @@ class ApisearchBuilder
         }
 
         if (!$available && !$this->indexProductNoStock) {
+            if ($context->isDebug()) {
+                echo json_encode([
+                    'uuid' => ['id' => $productId, 'type' => 'product'],
+                    'error' => 'Product not available. Discarding.',
+                    'data' => [
+                        'available_for_order' => $product['available_for_order'],
+                        'real_out_of_stock' => $product['real_out_of_stock'],
+                        'minimal_quantity' => $product['minimal_quantity']
+                    ]
+                ]);
+                echo PHP_EOL;
+                ob_flush();
+            }
+
             return false;
         }
 
@@ -228,6 +242,15 @@ class ApisearchBuilder
             empty($img) &&
             empty($combinationImg)
         ) {
+            if ($context->isDebug()) {
+                echo json_encode([
+                    'uuid' => ['id' => $productId, 'type' => 'product'],
+                    'error' => 'Product image not defined. Discarding.',
+                ]);
+                echo PHP_EOL;
+                ob_flush();
+            }
+
             return false;
         }
 
