@@ -9,7 +9,7 @@
 		type="application/javascript"
 		src='{$apisearch_admin_url}/{$apisearch_index_id}.layer.js{$group_param}'
 		charSet='UTF-8'
-		async
+		async defer
 		crossOrigin="anonymous"
 ></script>
 
