@@ -96,7 +96,6 @@ class ApisearchBuilder
         $upcs = array($product['upc']);
         $mpns = array($product['mpn'] ?? null);
         $img = $product['id_image'];
-        $hasCombinations = \intval($product['cache_default_attribute'] ?? 0) > 0;
         $idProductAttribute = null;
         $categoriesName = array();
         $categoriesDepth0 = [];
@@ -141,10 +140,11 @@ class ApisearchBuilder
         $maxPrice = null;
         $finalImagesByColor = array();
 
+        $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
+        $hasCombinations = count($combinations) > 0;
         if ($hasCombinations) {
 
             $quantity = 0;
-            $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
             $minPrice = 99999999999;
             $maxPrice = -1;
             $productAttributesId = array();
