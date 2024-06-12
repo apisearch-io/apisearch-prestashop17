@@ -27,7 +27,7 @@ class SteavisgarantisRates implements IntegrationRates
      * @return Rate[]
      * @throws \PrestaShopDatabaseException
      */
-    public static function loadRates(Context $context, $ids)
+    public static function loadRates(Context $context, array $ids)
     {
         $prefix = _DB_PREFIX_;
         $productIdsAsString = implode(',', $ids);
