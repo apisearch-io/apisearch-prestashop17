@@ -89,6 +89,7 @@ class ApisearchBuilder
         $outOfStock = $product['real_out_of_stock'] ?? 1;
         $langId = $context->getLanguageId();
         $isB2B = \Configuration::get('AS_B2B');
+        $indexImagesPerColor = \Configuration::get('AS_INDEX_IMAGES_PER_COLOR');
 
         $references = array($product['reference']);
         $supplierReferences = $this->indexSupplierReferences ? $product['supplier_referencies'] : [];
@@ -208,11 +209,13 @@ class ApisearchBuilder
                 }
             }
 
-            $combinationImages = ApisearchProduct::getImagesByProductAttributes(array_values($productAttributesId), $langId);
-            foreach ($productAttributesId as $colorHex => $attributeId) {
-                $finalImagesByColor[ltrim($colorHex, '#')] = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME,
-                    $combinationImages[$attributeId]
-                    , 'home_default');
+            if ($indexImagesPerColor) {
+                $combinationImages = ApisearchProduct::getImagesByProductAttributes(array_values($productAttributesId), $langId);
+                foreach ($productAttributesId as $colorHex => $attributeId) {
+                    $finalImagesByColor[ltrim($colorHex, '#')] = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME,
+                        $combinationImages[$attributeId]
+                        , 'home_default');
+                }
             }
 
         } else {
