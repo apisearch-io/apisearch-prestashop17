@@ -53,7 +53,13 @@ class ApisearchBuilder
         }
 
         $items = array_filter(array_map(function($product) use ($version, $context) {
-            return $this->buildItemFromProduct($product, $version, $context);
+            if ($context->printOnlyPSProducts()) {
+                echo json_encode($product);
+                echo PHP_EOL;
+                ob_flush();
+            } else {
+                return $this->buildItemFromProduct($product, $version, $context);
+            }
         }, $products));
 
         if ($context->isDebug()) {
@@ -331,6 +337,7 @@ class ApisearchBuilder
                 'price_with_currency' => $priceWithCurrency,
                 'supplier_reference' => $supplierReferences,
                 'show_price' => ($productAvailableForOrder || $product['show_price']), // Checks if the price must be shown
+                'description' => $description,
                 'images_by_color' => $finalImagesByColor,
             ),
             'indexed_metadata' => array_merge(array_filter(array(

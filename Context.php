@@ -11,12 +11,14 @@ class Context
     private $loadSales;
     private $loadSuppliers;
     private $debug;
+    private $onlyPSProducts;
 
     public static function fromUrl()
     {
         $context = new self();
         $context->language = self::guessLanguage(\Tools::getValue('lang'));
         $context->debug = \Tools::getValue('debug', false);
+        $context->onlyPSProducts = \Tools::getValue('only-ps-products', false);
         $context->shopId = \Tools::getValue('shop', \Context::getContext()->shop->id);
         $context->withTax = \Tools::getValue('tax', "1") === "1";
         $context->currency = self::guessCurrency(\Tools::getValue('currency'));
@@ -134,5 +136,10 @@ class Context
     public function isDebug()
     {
         return $this->debug;
+    }
+
+    public function printOnlyPSProducts()
+    {
+        return $this->onlyPSProducts;
     }
 }
