@@ -39,12 +39,13 @@ class ApisearchManufacturer
             FROM `{$prefix}manufacturer`
             WHERE `id_manufacturer` in ($missingManufacturersIdAsString)";
 
-        $manufacturers = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql);
+        $manufacturers = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
         foreach ($manufacturers as $manufacturer) {
-            self::$manufacturers[$manufacturer['id_manufacturer']] = $manufacturer['active'] === 1
-                ? null
-                : $manufacturer;
-            $alreadyLoadedManufacturers[$manufacturer['id_manufacturer']] = $manufacturer;
+            $manufacturerIsActive = strval($manufacturer['active']) === "1";
+            $idManufacturer = $manufacturer['id_manufacturer'];
+            $manufacturerData = $manufacturerIsActive ? $manufacturer : null;
+            self::$manufacturers[$idManufacturer] = $manufacturerData;
+            $alreadyLoadedManufacturers[$idManufacturer] = $manufacturerData;
         }
 
         return $alreadyLoadedManufacturers;
