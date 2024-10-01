@@ -5,8 +5,6 @@ namespace Apisearch\Model;
 use Apisearch\Context;
 use Apisearch\Rates\Rate;
 use Apisearch\Rates\Rating;
-use Apisearch\Rates\SteavisgarantisRates;
-use PrestaShop\Module\FacetedSearch\Hook\Product;
 
 class ApisearchBuilder
 {
@@ -295,15 +293,35 @@ class ApisearchBuilder
             /**
              * Groups
              */
-            $groups = \Group::getGroups($context->getLanguageId(), $context->getShopId());
             $users = [];
+            $keys = [];
+            $groups = \Group::getGroups($context->getLanguageId(), $context->getShopId());
             foreach ($groups as $group) {
-                $idGroup = $group['id_group'];
-                $groupPriceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, true, $idGroup);
+                $keys[$group['id_group']] = ['id_group' => $group['id_group'], 'id_customer' => null, 'with_tax' => $group['price_display_method']];
+            }
+
+            $prefix = _DB_PREFIX_;
+            $sql = "
+            SELECT sp.id_customer, sp.id_group, g.price_display_method
+                FROM {$prefix}specific_price sp
+                    INNER JOIN {$prefix}product_shop ps ON ps.id_product = sp.id_product AND ps.id_shop = {$context->getShopId()}
+                    INNER JOIN {$prefix}group g ON g.id_group = sp.id_group
+                    LEFT JOIN {$prefix}product_lang `pl` ON sp.id_product = pl.id_product AND pl.id_lang = $langId AND pl.id_shop = {$context->getShopId()}
+                WHERE sp.id_product = {$productId} AND
+                      sp.id_customer > 0
+            ";
+
+            $userPrices = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
+            foreach ($userPrices as $userPrice) {
+                $keys['cus_' . $userPrice['id_customer']] = ['id_group' => $userPrice['id_group'], 'id_customer' => $userPrice['id_customer'], 'with_tax' => $userPrice['price_display_method']];
+            }
+
+            foreach ($keys as $key => $groupData) {
+                $groupPriceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, true, $groupData['id_group'], $groupData['id_customer'], $groupData['with_tax'] == '0');
                 $groupPrice = $groupPriceGroup[0];
                 $groupPriceWithCurrency = $groupPriceGroup[1];
 
-                $groupOldPriceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, false, $idGroup);
+                $groupOldPriceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, false, $groupData['id_group'], $groupData['id_customer'], $groupData['with_tax'] == '0');
                 $groupOldPrice = $groupOldPriceGroup[0];
                 $groupOldPriceWithCurrency = $groupOldPriceGroup[1];
 
@@ -314,7 +332,7 @@ class ApisearchBuilder
                     continue;
                 }
 
-                $users[$group['id_group']] = [
+                $users[$key] = [
                     'p' => $groupPrice,
                     'pc' => $groupPriceWithCurrency,
                     'op' => $groupOldPrice,
@@ -488,18 +506,33 @@ class ApisearchBuilder
         return array_values(array_map('strval', array_unique(array_filter($array))));
     }
 
-    private function getProductPrices(Context $context, $productId, $idProductAttribute, $reduction, $groupId = null)
+    /**
+     * @param Context $context
+     * @param $productId
+     * @param $idProductAttribute
+     * @param $reduction
+     * @param $groupId
+     * @param $userId
+     * @return array
+     */
+    private function getProductPrices(Context $context, $productId, $idProductAttribute, $reduction, $groupId = null, $userId = null, $withTax = null)
     {
         if (!$groupId) {
             $groupId = (int) \Configuration::get('PS_UNIDENTIFIED_GROUP');
         }
 
+        $resolvedWithTax = $context->isWithTax();
+        if (is_bool($withTax)) {
+            $resolvedWithTax = $withTax;
+        }
+
+        var_dump($groupId);
+        var_dump($withTax);
         $specPrice = true;
         $price = \Product::priceCalculation(
             $context->getShopId(), $productId, $idProductAttribute, $this->idCountry, 0, 0, $context->getCurrency()->id, $groupId, 1,
-            $context->isWithTax(), 6, false, $reduction, true, $specPrice, true
+            $withTax, 6, false, $reduction, true, $specPrice, true, $userId
         );
-
         $price = \Tools::convertPrice($price, $context->getCurrency());
         $price = \round($price, 2);
         $priceWithCurrency = \Tools::displayPrice($price, $context->getCurrency());

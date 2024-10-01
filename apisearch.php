@@ -414,8 +414,18 @@ class Apisearch extends Module
             $currentIdGroup = empty($currentIdGroup)
                 ? $this->context->customer->id_default_group
                 : $currentIdGroup;
+
+            $currentIdCustomer = \Tools::getValue('apisearch_customer_id');
+            $currentIdCustomer = empty($currentIdCustomer)
+                ? $this->context->customer->id
+                : $currentIdCustomer;
+
+            if (!empty($currentIdCustomer)) {
+                $currentIdCustomer = 'cus_' . $currentIdCustomer;
+            }
         } else {
             $currentIdGroup = null;
+            $currentIdCustomer = null;
         }
 
         $this->context->smarty->assign(array(
@@ -423,7 +433,8 @@ class Apisearch extends Module
             'apisearch_index_id' => Configuration::get('AS_INDEX', Context::getContext()->language->id),
             'group_id' => $currentIdGroup != Configuration::get('PS_UNIDENTIFIED_GROUP')
                 ? $currentIdGroup
-                : null
+                : null,
+            'customer_id' => $currentIdCustomer,
         ));
 
         return $this->display(__FILE__, 'views/templates/front/search.tpl');
