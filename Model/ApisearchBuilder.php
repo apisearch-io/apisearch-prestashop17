@@ -526,12 +526,10 @@ class ApisearchBuilder
             $resolvedWithTax = $withTax;
         }
 
-        var_dump($groupId);
-        var_dump($withTax);
         $specPrice = true;
         $price = \Product::priceCalculation(
             $context->getShopId(), $productId, $idProductAttribute, $this->idCountry, 0, 0, $context->getCurrency()->id, $groupId, 1,
-            $withTax, 6, false, $reduction, true, $specPrice, true, $userId
+            $resolvedWithTax, 6, false, $reduction, true, $specPrice, true, $userId
         );
         $price = \Tools::convertPrice($price, $context->getCurrency());
         $price = \round($price, 2);
