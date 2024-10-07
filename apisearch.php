@@ -46,10 +46,6 @@ class Apisearch extends Module
         $this->displayName = $this->l('Apisearch');
         $this->description = $this->l('module_description');
         $this->ps_versions_compliancy = array('min' => '1.5', 'max' => _PS_VERSION_);
-
-        if (!$this->isRegisteredInHook('actionUpdateQuantity')) {
-            $this->registerHook('actionUpdateQuantity');
-        }
     }
 
     public function install()
@@ -68,6 +64,7 @@ class Apisearch extends Module
         Configuration::updateValue('AS_INDEX_DESCRIPTIONS', ApisearchDefaults::DEFAULT_INDEX_DESCRIPTIONS);
         Configuration::updateValue('AS_B2B', false);
         Configuration::updateValue('AS_INDEX_IMAGES_PER_COLOR', false);
+        Configuration::updateValue('AS_SHOW_PRICES_WITHOUT_TAX', ApisearchDefaults::AS_SHOW_PRICES_WITHOUT_TAX);
 
         $meta_as = new Meta();
         $meta_as->page = 'module-apisearch-as_search';
@@ -81,12 +78,7 @@ class Apisearch extends Module
 
         return parent::install() &&
             $this->registerHook('header') &&
-            $this->registerHook('top') &&
-            $this->registerHook('actionObjectProductAddAfter') &&
-            $this->registerHook('actionObjectProductUpdateAfter') &&
-            $this->registerHook('actionObjectProductDeleteBefore') &&
-            $this->registerHook('actionObjectOrderUpdateAfter') &&
-            $this->registerHook('actionUpdateQuantity');
+            $this->registerHook('top');
     }
 
     public function uninstall()
@@ -105,6 +97,7 @@ class Apisearch extends Module
         Configuration::deleteByName('AS_INDEX_DESCRIPTIONS');
         Configuration::deleteByName('AS_B2B');
         Configuration::deleteByName('AS_INDEX_IMAGES_PER_COLOR');
+        Configuration::deleteByName('AS_SHOW_PRICES_WITH_TAX');
 
         $meta_as = Meta::getMetaByPage('module-apisearch-as_search', Context::getContext()->language->id);
         $meta_as = new Meta($meta_as['id_meta']);
@@ -327,6 +320,26 @@ class Apisearch extends Module
                         )
                     ),
                 ),
+                array(
+                    'col' => 3,
+                    'type' => 'switch',
+                    'label' => $this->l('prices_without_tax'),
+                    'name' => 'AS_SHOW_PRICES_WITHOUT_TAX',
+                    'desc' => $this->l('prices_without_tax_help'),
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('yes')
+                        ),
+                        array(
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('no')
+                        )
+                    ),
+                ),
             ),
             'buttons' => array(
                 array(
@@ -362,6 +375,7 @@ class Apisearch extends Module
             'AS_INDEX_DESCRIPTIONS' => Configuration::get('AS_INDEX_DESCRIPTIONS'),
             'AS_B2B' => Configuration::get('AS_B2B'),
             'AS_INDEX_IMAGES_PER_COLOR' => Configuration::get('AS_INDEX_IMAGES_PER_COLOR'),
+            'AS_SHOW_PRICES_WITHOUT_TAX' => Configuration::get('AS_SHOW_PRICES_WITHOUT_TAX'),
         );
         foreach ($this->context->controller->getLanguages() as $language) {
             $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);

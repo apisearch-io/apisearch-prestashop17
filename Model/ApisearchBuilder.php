@@ -12,7 +12,6 @@ class ApisearchBuilder
     private $indexProductPurchaseCount;
     private $indexProductNoStock;
     private $indexSupplierReferences;
-    private $idCountry;
 
     /**
      */
@@ -22,8 +21,6 @@ class ApisearchBuilder
         $this->indexProductPurchaseCount = \boolval(\Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT'));
         $this->indexProductNoStock = \boolval(\Configuration::get('AS_INDEX_PRODUCT_NO_STOCK'));
         $this->indexSupplierReferences = \boolval(\Configuration::get('AS_FIELDS_SUPPLIER_REFERENCES'));
-        $address = \Address::initialize();
-        $this->idCountry = $address->id_country;
     }
 
     /**
@@ -305,7 +302,8 @@ class ApisearchBuilder
             SELECT sp.id_customer, sp.id_group, g.price_display_method
                 FROM {$prefix}specific_price sp
                     INNER JOIN {$prefix}product_shop ps ON ps.id_product = sp.id_product AND ps.id_shop = {$context->getShopId()}
-                    INNER JOIN {$prefix}group g ON g.id_group = sp.id_group
+                    INNER JOIN {$prefix}customer c ON c.id_customer = sp.id_customer
+                    INNER JOIN {$prefix}group g ON g.id_group = c.id_default_group
                     LEFT JOIN {$prefix}product_lang `pl` ON sp.id_product = pl.id_product AND pl.id_lang = $langId AND pl.id_shop = {$context->getShopId()}
                 WHERE sp.id_product = {$productId} AND
                       sp.id_customer > 0
@@ -528,8 +526,10 @@ class ApisearchBuilder
 
         $specPrice = true;
         $price = \Product::priceCalculation(
-            $context->getShopId(), $productId, $idProductAttribute, $this->idCountry, 0, 0, $context->getCurrency()->id, $groupId, 1,
-            $resolvedWithTax, 6, false, $reduction, true, $specPrice, true, $userId
+            $context->getShopId(), $productId, $idProductAttribute,
+            $context->getIdCountry(), $context->getIdState(), $context->getZipcode(),
+            $context->getCurrency()->id, $groupId, 1,
+            $resolvedWithTax, 6, false, $reduction, false, $specPrice, true, $userId,
         );
         $price = \Tools::convertPrice($price, $context->getCurrency());
         $price = \round($price, 2);

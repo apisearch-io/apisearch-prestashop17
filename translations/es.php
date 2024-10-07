@@ -16,6 +16,8 @@ $_MODULE['<{apisearch}prestashop>apisearch_98ae660e070aac4118b4618ddb9134fd'] = 
 $_MODULE['<{apisearch}prestashop>apisearch_49279bc316963e9aff1db1460fd7526c'] = 'Muestra unos precios u otros en el buscador dependiendo del usuario que lo visualiza y del grupo al que perteneze. Funciona solo con grupo de usuarios. Para testear, puedes forzar la visualización para un grupo de usuarios añadiendo el parámetro apisearch_group_id en la URL con el ID.';
 $_MODULE['<{apisearch}prestashop>apisearch_cc386a578bf90387d4991c3a5b2d0fa7'] = 'Indexar imágenes por color';
 $_MODULE['<{apisearch}prestashop>apisearch_448c00326fbf94b280405f07a079dc13'] = 'Si activas un filtro de colores en tu buscador, se mostrará la imagen del color filtrado. En caso contrario, siempre se mostrará la imagen principal';
+$_MODULE['<{apisearch}prestashop>apisearch_4c2794db0c12899301ea956b99287a72'] = 'Mostrar precios sin IVA';
+$_MODULE['<{apisearch}prestashop>apisearch_95177dc14299e2e57f993023ba664d6d'] = 'Excluir el IVA en los precios del buscador. Este valor se puede sobreescribir en la url del feed añadiendo el valor al parámetro vat';
 
 $_MODULE['<{apisearch}prestashop>apisearch_a6105c0a611b41b08f1209506350279e'] = 'Si';
 $_MODULE['<{apisearch}prestashop>apisearch_7fa3b767c460b54a2be4d49030b349c7'] = 'No';

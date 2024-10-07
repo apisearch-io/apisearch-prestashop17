@@ -12,6 +12,9 @@ class Context
     private $loadSuppliers;
     private $debug;
     private $onlyPSProducts;
+    private $idCountry;
+    private $idState;
+    private $zipcode;
 
     public static function fromUrl()
     {
@@ -20,10 +23,13 @@ class Context
         $context->debug = \Tools::getValue('debug', false);
         $context->onlyPSProducts = \Tools::getValue('only-ps-products', false);
         $context->shopId = \Tools::getValue('shop', \Context::getContext()->shop->id);
-        $context->withTax = \Tools::getValue('tax', "1") === "1";
+        $context->withTax = \Tools::getValue('tax', !\Configuration::get('AS_SHOW_PRICES_WITHOUT_TAX'));
         $context->currency = self::guessCurrency(\Tools::getValue('currency'));
         $context->loadSales = \Configuration::get('AS_INDEX_PRODUCT_PURCHASE_COUNT') == 1;
         $context->loadSuppliers = \Configuration::get('AS_FIELDS_SUPPLIER_REFERENCES') == 1;
+        $context->idCountry = \Tools::getValue('id-country', \Address::initialize()->id_country);
+        $context->idState = \Tools::getValue('id-state', \Address::initialize()->id_state);
+        $context->zipcode = \Tools::getValue('zipcode', \Address::initialize()->postcode);
 
         return $context;
     }
@@ -141,5 +147,29 @@ class Context
     public function printOnlyPSProducts()
     {
         return $this->onlyPSProducts;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getIdCountry()
+    {
+        return $this->idCountry;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getIdState()
+    {
+        return $this->idState;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getZipcode()
+    {
+        return $this->zipcode;
     }
 }

@@ -16,6 +16,8 @@ $_MODULE['<{apisearch}prestashop>apisearch_98ae660e070aac4118b4618ddb9134fd'] = 
 $_MODULE['<{apisearch}prestashop>apisearch_49279bc316963e9aff1db1460fd7526c'] = 'Display specific prices for specific users depending on the group they belong. Works exclusively for user groups. Only for testing purposes, you can force a specific user groups search visualization by adding the URL parameter apisearch_group_id with its ID';
 $_MODULE['<{apisearch}prestashop>apisearch_cc386a578bf90387d4991c3a5b2d0fa7'] = 'Index images by color';
 $_MODULE['<{apisearch}prestashop>apisearch_448c00326fbf94b280405f07a079dc13'] = 'If you install a color filter in your search layer, the specific color image will be displayed. Otherwise, the default image will be displayed no matter what';
+$_MODULE['<{apisearch}prestashop>apisearch_4c2794db0c12899301ea956b99287a72'] = 'Exclude VAT from prices';
+$_MODULE['<{apisearch}prestashop>apisearch_95177dc14299e2e57f993023ba664d6d'] = 'Exclude the VAT from all prices shown inside the search box. You can overwrite this valur by using the feed query parameter vat';
 
 $_MODULE['<{apisearch}prestashop>apisearch_a6105c0a611b41b08f1209506350279e'] = 'Yes';
 $_MODULE['<{apisearch}prestashop>apisearch_7fa3b767c460b54a2be4d49030b349c7'] = 'No';
