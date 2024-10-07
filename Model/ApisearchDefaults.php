@@ -4,7 +4,7 @@ namespace Apisearch\Model;
 
 class ApisearchDefaults
 {
-    const DEFAULT_AS_ADMIN_URL = 'http://localhost:8300';
+    const DEFAULT_AS_ADMIN_URL = 'https://static.apisearch.cloud';
     const PLUGIN_NAME = 'apisearch';
     const PLUGIN_VERSION = '2.2.15';
     const DEFAULT_INDEX_PRODUCTS_WITHOUT_IMAGE = false;
