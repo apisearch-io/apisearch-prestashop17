@@ -355,6 +355,7 @@ class ApisearchBuilder
                 'show_price' => ($productAvailableForOrder || $product['show_price']), // Checks if the price must be shown
                 'description' => $description,
                 'images_by_color' => $finalImagesByColor,
+                'stock' => \Product::getRealQuantity($productId)
             ),
             'indexed_metadata' => array_merge(array_filter(array(
                 'as_version' => \intval($version),
