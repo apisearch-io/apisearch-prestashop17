@@ -530,7 +530,7 @@ class ApisearchBuilder
             $context->getShopId(), $productId, $idProductAttribute,
             $context->getIdCountry(), $context->getIdState(), $context->getZipcode(),
             $context->getCurrency()->id, $groupId, 1,
-            $resolvedWithTax, 6, false, $reduction, false, $specPrice, true, $userId,
+            $resolvedWithTax, 6, false, $reduction, false, $specPrice, true, $userId
         );
         $price = \Tools::convertPrice($price, $context->getCurrency());
         $price = \round($price, 2);
