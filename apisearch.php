@@ -62,6 +62,7 @@ class Apisearch extends Module
         Configuration::updateValue('AS_INDEX_PRODUCT_NO_STOCK', ApisearchDefaults::DEFAULT_AS_INDEX_PRODUCT_NO_STOCK);
         Configuration::updateValue('AS_FIELDS_SUPPLIER_REFERENCES', ApisearchDefaults::AS_FIELDS_SUPPLIER_REFERENCES);
         Configuration::updateValue('AS_INDEX_DESCRIPTIONS', ApisearchDefaults::DEFAULT_INDEX_DESCRIPTIONS);
+        Configuration::updateValue('AS_INDEX_LONG_DESCRIPTIONS', ApisearchDefaults::DEFAULT_INDEX_DESCRIPTIONS);
         Configuration::updateValue('AS_B2B', false);
         Configuration::updateValue('AS_INDEX_IMAGES_PER_COLOR', false);
         Configuration::updateValue('AS_SHOW_PRICES_WITHOUT_TAX', ApisearchDefaults::AS_SHOW_PRICES_WITHOUT_TAX);
@@ -95,6 +96,7 @@ class Apisearch extends Module
         Configuration::deleteByName('AS_INDEX_PRODUCT_PURCHASE_COUNT');
         Configuration::deleteByName('AS_INDEX_PRODUCT_NO_STOCK');
         Configuration::deleteByName('AS_INDEX_DESCRIPTIONS');
+        Configuration::deleteByName('AS_INDEX_LONG_DESCRIPTIONS');
         Configuration::deleteByName('AS_B2B');
         Configuration::deleteByName('AS_INDEX_IMAGES_PER_COLOR');
         Configuration::deleteByName('AS_SHOW_PRICES_WITH_TAX');
@@ -283,6 +285,26 @@ class Apisearch extends Module
                 array(
                     'col' => 3,
                     'type' => 'switch',
+                    'label' => $this->l('index_long_descriptions'),
+                    'name' => 'AS_INDEX_LONG_DESCRIPTIONS',
+                    'desc' => $this->l('index_long_descriptions_help'),
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('yes')
+                        ),
+                        array(
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('no')
+                        )
+                    ),
+                ),
+                array(
+                    'col' => 3,
+                    'type' => 'switch',
                     'label' => $this->l('enable_b2b'),
                     'name' => 'AS_B2B',
                     'desc' => $this->l('enable_b2b_help'),
@@ -373,6 +395,7 @@ class Apisearch extends Module
             'AS_INDEX_PRODUCT_NO_STOCK' => Configuration::get('AS_INDEX_PRODUCT_NO_STOCK'),
             'AS_FIELDS_SUPPLIER_REFERENCES' => Configuration::get('AS_FIELDS_SUPPLIER_REFERENCES'),
             'AS_INDEX_DESCRIPTIONS' => Configuration::get('AS_INDEX_DESCRIPTIONS'),
+            'AS_INDEX_LONG_DESCRIPTIONS' => Configuration::get('AS_INDEX_LONG_DESCRIPTIONS'),
             'AS_B2B' => Configuration::get('AS_B2B'),
             'AS_INDEX_IMAGES_PER_COLOR' => Configuration::get('AS_INDEX_IMAGES_PER_COLOR'),
             'AS_SHOW_PRICES_WITHOUT_TAX' => Configuration::get('AS_SHOW_PRICES_WITHOUT_TAX'),

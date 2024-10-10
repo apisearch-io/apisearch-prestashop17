@@ -284,7 +284,19 @@ class ApisearchBuilder
         $mpns = self::toArrayOfStrings($mpns);
         $references = self::toArrayOfStrings($references);
         $categoriesName = array_values(array_unique(array_filter($categoriesName)));
-        $description = \Configuration::get('AS_INDEX_DESCRIPTIONS') ? \strip_tags(\strval($product['description_short'])) : null;
+
+        // If long description is enabled, return long description
+        // If long description is disabled or long description is empty, return short description if is enabled
+        $loadLongDescription = \Configuration::get('AS_INDEX_LONG_DESCRIPTIONS');
+        $loadShortDescription = \Configuration::get('AS_INDEX_DESCRIPTIONS');
+        $description = null;
+        if ($loadLongDescription && !empty($product['description'])) {
+            $description = \strip_tags(\strval($product['description']));
+        }
+
+        if (empty($description) && $loadShortDescription && !empty($product['description_short'])) {
+            $description = \strip_tags(\strval($product['description_short']));
+        }
 
         if ($isB2B) {
             /**
