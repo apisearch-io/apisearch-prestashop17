@@ -62,20 +62,10 @@ class Apisearch extends Module
         Configuration::updateValue('AS_INDEX_PRODUCT_NO_STOCK', ApisearchDefaults::DEFAULT_AS_INDEX_PRODUCT_NO_STOCK);
         Configuration::updateValue('AS_FIELDS_SUPPLIER_REFERENCES', ApisearchDefaults::AS_FIELDS_SUPPLIER_REFERENCES);
         Configuration::updateValue('AS_INDEX_DESCRIPTIONS', ApisearchDefaults::DEFAULT_INDEX_DESCRIPTIONS);
-        Configuration::updateValue('AS_INDEX_LONG_DESCRIPTIONS', ApisearchDefaults::DEFAULT_INDEX_DESCRIPTIONS);
+        Configuration::updateValue('AS_INDEX_LONG_DESCRIPTIONS', ApisearchDefaults::DEFAULT_INDEX_LONG_DESCRIPTIONS);
         Configuration::updateValue('AS_B2B', false);
         Configuration::updateValue('AS_INDEX_IMAGES_PER_COLOR', false);
         Configuration::updateValue('AS_SHOW_PRICES_WITHOUT_TAX', ApisearchDefaults::AS_SHOW_PRICES_WITHOUT_TAX);
-
-        $meta_as = new Meta();
-        $meta_as->page = 'module-apisearch-as_search';
-        $meta_as->title = $this->l('Apisearch - Search');
-        $meta_as->description = $this->l('Search by Apisearch');
-        $meta_as->url_rewrite = $this->l('as_search');
-
-        if (!$meta_as->save()) {
-            return false;
-        }
 
         return parent::install() &&
             $this->registerHook('header') &&
@@ -100,13 +90,6 @@ class Apisearch extends Module
         Configuration::deleteByName('AS_B2B');
         Configuration::deleteByName('AS_INDEX_IMAGES_PER_COLOR');
         Configuration::deleteByName('AS_SHOW_PRICES_WITH_TAX');
-
-        $meta_as = Meta::getMetaByPage('module-apisearch-as_search', Context::getContext()->language->id);
-        $meta_as = new Meta($meta_as['id_meta']);
-
-        if (!$meta_as->delete()) {
-            return false;
-        }
 
         return parent::uninstall();
     }
