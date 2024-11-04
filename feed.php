@@ -50,6 +50,7 @@ try {
     $exporter = new ApisearchExporter(new ApisearchBuilder());
 
     $context = Context::fromUrl();
+    Context::updatePrestashopContext($context);
     $exporter->printItemsByShopAndLang($context);
 
 } catch (\Throwable $exception) {

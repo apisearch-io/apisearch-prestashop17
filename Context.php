@@ -35,6 +35,17 @@ class Context
     }
 
     /**
+     * @param Context $context
+     * @return void
+     * @throws \PrestaShopDatabaseException
+     * @throws \PrestaShopException
+     */
+    public static function updatePrestashopContext(Context $context)
+    {
+        \Context::getContext()->language = new \Language($context->language);
+    }
+
+    /**
      * @param $currency
      * @return \Currency
      */
