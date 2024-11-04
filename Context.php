@@ -42,7 +42,7 @@ class Context
      */
     public static function updatePrestashopContext(Context $context)
     {
-        \Context::getContext()->language = new \Language($context->language);
+        \Context::getContext()->language = $context->language;
     }
 
     /**
