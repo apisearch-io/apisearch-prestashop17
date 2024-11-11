@@ -69,9 +69,18 @@ class ApisearchBuilder
         }
 
         $items = array_filter($items);
+        $normalizedItems = [];
+        foreach ($items as $item) {
+            if (isset($item['uuid'])) {
+                $normalizedItems[] = $item;
+            } else {
+                $item = array_filter($item);
+                $normalizedItems = array_merge($normalizedItems, $item);
+            }
+        }
 
-        if (!empty($items)) {
-            $flushCallable($items);
+        if (!empty($normalizedItems)) {
+            $flushCallable($normalizedItems);
         }
     }
 
@@ -79,16 +88,32 @@ class ApisearchBuilder
      * @param $product
      * @param $version
      * @param Context $context
-     * @return array|false
+     * @param $colorToFilterBy
+     * @return array|array[]|\array[][]|false|false[]|\false[][]
      * @throws \PrestaShopDatabaseException
      * @throws \PrestaShopException
      */
-    public function buildItemFromProduct($product, $version, Context $context)
+    public function buildItemFromProduct($product, $version, Context $context, $colorToFilterBy = null)
     {
         $productId = $product['id_product'];
+        $langId = $context->getLanguageId();
+
+        /**
+         * Let's check possible colors
+         */
+        if ($colorToFilterBy === null && \Configuration::get('AS_GROUP_BY_COLOR')) {
+            $colors = ApisearchProduct::getProductAvailableColors($productId, $langId);
+            $colors = array_filter($colors);
+            if (count($colors) > 1) {
+                return array_map(function($color) use ($product, $version, $context) {
+                    return $this->buildItemFromProduct($product, $version, $context, $color);
+                }, $colors);
+            }
+
+        }
+
         $productAvailableForOrder = $product['available_for_order'];
         $outOfStock = $product['real_out_of_stock'] ?? 1;
-        $langId = $context->getLanguageId();
         $isB2B = \Configuration::get('AS_B2B');
         $indexImagesPerColor = \Configuration::get('AS_INDEX_IMAGES_PER_COLOR');
 
@@ -142,15 +167,14 @@ class ApisearchBuilder
         $maxPrice = null;
         $finalImagesByColor = array();
 
-        $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId);
+        $combinations = ApisearchProduct::getAttributeCombinations($productId, $langId, $colorToFilterBy);
         $hasCombinations = count($combinations) > 0;
+        $productAttributesId = array();
         if ($hasCombinations) {
 
             $quantity = 0;
             $minPrice = 99999999999;
             $maxPrice = -1;
-            $productAttributesId = array();
-
             foreach ($combinations as $combination) {
                 $references[] = $combination['reference'] ?? null;
                 $eans[] = $combination['ean13'] ?? null;
@@ -210,7 +234,7 @@ class ApisearchBuilder
                 }
             }
 
-            if ($indexImagesPerColor) {
+            if (!$colorToFilterBy && $indexImagesPerColor) {
                 $combinationImages = ApisearchProduct::getImagesByProductAttributes(array_values($productAttributesId), $langId);
                 foreach ($productAttributesId as $colorHex => $attributeId) {
                     $finalImagesByColor[ltrim($colorHex, '#')] = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME,
@@ -258,8 +282,25 @@ class ApisearchBuilder
             return false;
         }
 
-        $url = \Context::getContext()->link->getProductLink($productId, null, null, null, $langId);
-        $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
+
+        if ($colorToFilterBy) {
+            $combinationImages = ApisearchProduct::getImagesByProductAttributes(array_values($productAttributesId), $langId);
+            if (
+                isset($productAttributesId[$colorToFilterBy]) &&
+                isset($combinationImages[$productAttributesId[$colorToFilterBy]])
+            ) {
+                $imageId = $combinationImages[$productAttributesId[$colorToFilterBy]];
+                $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $imageId, 'home_default');
+            } else {
+                $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
+            }
+
+            $firstCombinationIdProductAttribute = $hasCombinations ? $combinations[0]['id_product_attribute'] : null;
+            $url = \Context::getContext()->link->getProductLink($productId, null, null, null, $langId, $context->getShopId(), $firstCombinationIdProductAttribute);
+        } else {
+            $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
+            $url = \Context::getContext()->link->getProductLink($productId, null, null, null, $langId, $context->getShopId());
+        }
 
         $priceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, true);
         $price = $priceGroup[0];
@@ -465,6 +506,10 @@ class ApisearchBuilder
         $itemAsArray['exact_matching_metadata'] = array_values(array_filter($itemAsArray['exact_matching_metadata'], function($data) {
             return !empty($data);
         }));
+
+        if ($colorToFilterBy) {
+            $itemAsArray['uuid']['id'] = $productId . '-' . trim($colorToFilterBy, '# ');
+        }
 
         return $itemAsArray;
     }

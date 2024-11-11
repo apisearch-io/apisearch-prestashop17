@@ -66,6 +66,7 @@ class Apisearch extends Module
         Configuration::updateValue('AS_B2B', false);
         Configuration::updateValue('AS_INDEX_IMAGES_PER_COLOR', false);
         Configuration::updateValue('AS_SHOW_PRICES_WITHOUT_TAX', ApisearchDefaults::AS_SHOW_PRICES_WITHOUT_TAX);
+        Configuration::updateValue('AS_GROUP_BY_COLOR', ApisearchDefaults::AS_GROUP_BY_COLOR);
 
         return parent::install() &&
             $this->registerHook('header') &&
@@ -90,6 +91,7 @@ class Apisearch extends Module
         Configuration::deleteByName('AS_B2B');
         Configuration::deleteByName('AS_INDEX_IMAGES_PER_COLOR');
         Configuration::deleteByName('AS_SHOW_PRICES_WITH_TAX');
+        Configuration::deleteByName('AS_GROUP_BY_COLOR');
 
         return parent::uninstall();
     }
@@ -345,6 +347,26 @@ class Apisearch extends Module
                         )
                     ),
                 ),
+                array(
+                    'col' => 3,
+                    'type' => 'switch',
+                    'label' => $this->l('group_by_color'),
+                    'name' => 'AS_GROUP_BY_COLOR',
+                    'desc' => $this->l('group_by_color_help'),
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('yes')
+                        ),
+                        array(
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('no')
+                        )
+                    ),
+                ),
             ),
             'buttons' => array(
                 array(
@@ -382,6 +404,7 @@ class Apisearch extends Module
             'AS_B2B' => Configuration::get('AS_B2B'),
             'AS_INDEX_IMAGES_PER_COLOR' => Configuration::get('AS_INDEX_IMAGES_PER_COLOR'),
             'AS_SHOW_PRICES_WITHOUT_TAX' => Configuration::get('AS_SHOW_PRICES_WITHOUT_TAX'),
+            'AS_GROUP_BY_COLOR' => Configuration::get('AS_GROUP_BY_COLOR'),
         );
         foreach ($this->context->controller->getLanguages() as $language) {
             $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);

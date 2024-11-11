@@ -183,11 +183,11 @@ class ApisearchProduct
 
     /**
      * @param $productId
-     * @param $id_lang
-     * @return array|bool|\mysqli_result|\PDOStatement|resource
+     * @param $idLang
+     * @return array|bool|\mysqli_result|\PDOStatement|resource|null
      * @throws \PrestaShopDatabaseException
      */
-    public static function getAttributeCombinations($productId, $id_lang)
+    public static function getProductAvailableColors($productId, $idLang)
     {
         if (!\Combination::isFeatureActive()) {
             return [];
@@ -195,7 +195,39 @@ class ApisearchProduct
 
         $prefix = _DB_PREFIX_;
         $sql = "
-            SELECT 
+            SELECT DISTINCT a.color
+            FROM {$prefix}product_attribute pa
+            LEFT JOIN `{$prefix}product_attribute_combination` pac ON pac.`id_product_attribute` = pa.`id_product_attribute`
+            LEFT JOIN `{$prefix}attribute` a ON a.`id_attribute` = pac.`id_attribute`
+            LEFT JOIN `{$prefix}attribute_group` ag ON ag.`id_attribute_group` = a.`id_attribute_group`
+            LEFT JOIN `{$prefix}attribute_lang` al ON (a.`id_attribute` = al.`id_attribute` AND al.`id_lang` = $idLang)
+            LEFT JOIN `{$prefix}attribute_group_lang` agl ON (ag.`id_attribute_group` = agl.`id_attribute_group` AND agl.`id_lang` = $idLang)
+            WHERE pa.`id_product` = $productId";
+
+        $colors = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
+
+        return array_map(function($color) {
+            return $color['color'];
+        }, $colors);
+    }
+
+    /**
+     * @param $productId
+     * @param $idLang
+     * @param $colorToFilterBy
+     * @return array|bool|\mysqli_result|\PDOStatement|resource
+     * @throws \PrestaShopDatabaseException
+     */
+    public static function getAttributeCombinations($productId, $idLang, $colorToFilterBy)
+    {
+        if (!\Combination::isFeatureActive()) {
+            return [];
+        }
+
+        $prefix = _DB_PREFIX_;
+        $colorToFilterBySQL = $colorToFilterBy ? " AND (a.color = \"$colorToFilterBy\" OR a.color = \"\")" : "";
+        $sql = "
+            SELECT
                 pa.*,
                 ag.`id_attribute_group`, 
                 ag.`is_color_group`,
@@ -209,12 +241,13 @@ class ApisearchProduct
             LEFT JOIN `{$prefix}product_attribute_combination` pac ON pac.`id_product_attribute` = pa.`id_product_attribute`
             LEFT JOIN `{$prefix}attribute` a ON a.`id_attribute` = pac.`id_attribute`
             LEFT JOIN `{$prefix}attribute_group` ag ON ag.`id_attribute_group` = a.`id_attribute_group`
-            LEFT JOIN `{$prefix}attribute_lang` al ON (a.`id_attribute` = al.`id_attribute` AND al.`id_lang` = $id_lang)
-            LEFT JOIN `{$prefix}attribute_group_lang` agl ON (ag.`id_attribute_group` = agl.`id_attribute_group` AND agl.`id_lang` = $id_lang)
+            LEFT JOIN `{$prefix}attribute_lang` al ON (a.`id_attribute` = al.`id_attribute` AND al.`id_lang` = $idLang)
+            LEFT JOIN `{$prefix}attribute_group_lang` agl ON (ag.`id_attribute_group` = agl.`id_attribute_group` AND agl.`id_lang` = $idLang)
             LEFT JOIN `{$prefix}product_attribute_image` pai ON pai.id_product_attribute = pa.id_product_attribute
             LEFT JOIN `{$prefix}image_lang` il ON (il.`id_image` = pai.`id_image`)
             LEFT JOIN `{$prefix}image` i ON (i.`id_image` = pai.`id_image`) AND i.cover = 1
-            WHERE pa.`id_product` = $productId";
+            WHERE pa.`id_product` = $productId
+            {$colorToFilterBySQL}";
 
         $res = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
 
@@ -226,7 +259,7 @@ class ApisearchProduct
         return $res;
     }
 
-    public static function getImagesByProductAttributes($attributes, $id_lang)
+    public static function getImagesByProductAttributes($attributes, $idLang)
     {
         if (!\Combination::isFeatureActive() || empty($attributes)) {
             return [];
@@ -238,7 +271,7 @@ class ApisearchProduct
             FROM `' . _DB_PREFIX_ . 'product_attribute_image` pai
             LEFT JOIN `' . _DB_PREFIX_ . 'image_lang` il ON (il.`id_image` = pai.`id_image`)
             LEFT JOIN `' . _DB_PREFIX_ . 'image` i ON (i.`id_image` = pai.`id_image`)
-            WHERE pai.`id_product_attribute` IN (' . implode(',', $attributes) . ') AND il.`id_lang` = ' . (int) $id_lang . ' ORDER by i.`position`'
+            WHERE pai.`id_product_attribute` IN (' . implode(',', $attributes) . ') AND il.`id_lang` = ' . (int) $idLang . ' ORDER by i.`position`'
         );
 
         $images = array();

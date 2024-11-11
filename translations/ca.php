@@ -20,6 +20,8 @@ $_MODULE['<{apisearch}prestashop>apisearch_cc386a578bf90387d4991c3a5b2d0fa7'] = 
 $_MODULE['<{apisearch}prestashop>apisearch_448c00326fbf94b280405f07a079dc13'] = 'Si actives un filtre de colors en el teu cercador, es mostrarà l\'imatge del color filtrat. En cas contrari, sempre es mostrarà l\'imatge principal';
 $_MODULE['<{apisearch}prestashop>apisearch_4c2794db0c12899301ea956b99287a72'] = 'Mostrar preus sense IVA';
 $_MODULE['<{apisearch}prestashop>apisearch_95177dc14299e2e57f993023ba664d6d'] = 'Excluir l\'IVA als preus del cercador. Aquest valor es pot sobreescriure a la URL del feed afegint valor al paràmetre vat';
+$_MODULE['<{apisearch}prestashop>apisearch_60685f06115c0e958eecdaf859b21865'] = 'Agrupar variants per color';
+$_MODULE['<{apisearch}prestashop>apisearch_d42f1aac66ee5795ab8e9c52aa1cf910'] = 'Cada grup de variants amb el mateix color seran agrupats en un producte. L\'imatge que s\'escollirà per a cada un dels grups serà l\'imatge de la primera variant del mateix. Asseguri\'s que totes les variants amb el mateix color tenen la mateixa imatge';
 
 $_MODULE['<{apisearch}prestashop>apisearch_a6105c0a611b41b08f1209506350279e'] = 'Si';
 $_MODULE['<{apisearch}prestashop>apisearch_7fa3b767c460b54a2be4d49030b349c7'] = 'No';
