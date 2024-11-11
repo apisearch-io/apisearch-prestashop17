@@ -225,7 +225,6 @@ class ApisearchProduct
         }
 
         $prefix = _DB_PREFIX_;
-        $colorToFilterBySQL = $colorToFilterBy ? " AND (a.color = \"$colorToFilterBy\" OR a.color = \"\")" : "";
         $sql = "
             SELECT
                 pa.*,
@@ -246,10 +245,45 @@ class ApisearchProduct
             LEFT JOIN `{$prefix}product_attribute_image` pai ON pai.id_product_attribute = pa.id_product_attribute
             LEFT JOIN `{$prefix}image_lang` il ON (il.`id_image` = pai.`id_image`)
             LEFT JOIN `{$prefix}image` i ON (i.`id_image` = pai.`id_image`) AND i.cover = 1
-            WHERE pa.`id_product` = $productId
-            {$colorToFilterBySQL}";
+            WHERE pa.`id_product` = $productId";
 
         $res = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
+
+        /**
+         * When we want to filter by color, we must group all combinations by their id_product_attribute value.
+         * When one of this attribute rows defines the color, the whole group takes this color.
+         * After that, we only take these products from groups with that specific color.
+         */
+        if ($colorToFilterBy) {
+            /**
+             * Grouping
+             */
+            $groups = [];
+            foreach ($res as $row) {
+                $groupId = $row['id_product_attribute'];
+                if (!isset($groups[$groupId])) {
+                    $groups[$groupId] = array(
+                        'color' => null,
+                        'products' => array()
+                    );
+                }
+
+                if (!empty($row['attribute_color'])) {
+                    $groups[$groupId]['color'] = $row['attribute_color'];
+                }
+
+                $groups[$groupId]['products'][] = $row;
+            }
+
+            $res = [];
+            foreach ($groups as $group) {
+                if ($group['color'] !== $colorToFilterBy) {
+                    continue;
+                }
+
+                $res = array_merge($res, $group['products']);
+            }
+        }
 
         //Get quantity of each variation
         foreach ($res as $key => $row) {
