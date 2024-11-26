@@ -97,6 +97,7 @@ class ApisearchBuilder
     {
         $productId = $product['id_product'];
         $langId = $context->getLanguageId();
+        $imageType = ApisearchImage::getCurrentImageType();
 
         /**
          * Let's check possible colors
@@ -239,7 +240,7 @@ class ApisearchBuilder
                 foreach ($productAttributesId as $colorHex => $attributeId) {
                     $finalImagesByColor[ltrim($colorHex, '#')] = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME,
                         $combinationImages[$attributeId]
-                        , 'home_default');
+                        , $imageType);
                 }
             }
 
@@ -290,15 +291,15 @@ class ApisearchBuilder
                 isset($combinationImages[$productAttributesId[$colorToFilterBy]])
             ) {
                 $imageId = $combinationImages[$productAttributesId[$colorToFilterBy]];
-                $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $imageId, 'home_default');
+                $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $imageId, $imageType);
             } else {
-                $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
+                $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, $imageType);
             }
 
             $firstCombinationIdProductAttribute = $hasCombinations ? $combinations[0]['id_product_attribute'] : null;
             $url = \Context::getContext()->link->getProductLink($productId, null, null, null, $langId, $context->getShopId(), $firstCombinationIdProductAttribute);
         } else {
-            $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, 'home_default');
+            $image = \Context::getContext()->link->getImageLink($product['link_rewrite'] ?? ApisearchDefaults::PLUGIN_NAME, $img, $imageType);
             $url = \Context::getContext()->link->getProductLink($productId, null, null, null, $langId, $context->getShopId());
         }
 

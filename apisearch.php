@@ -29,6 +29,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Apisearch\Model\ApisearchDefaults;
+use Apisearch\Model\ApisearchImage;
 
 require_once __DIR__.'/vendor/autoload.php';
 
@@ -67,6 +68,7 @@ class Apisearch extends Module
         Configuration::updateValue('AS_INDEX_IMAGES_PER_COLOR', false);
         Configuration::updateValue('AS_SHOW_PRICES_WITHOUT_TAX', ApisearchDefaults::AS_SHOW_PRICES_WITHOUT_TAX);
         Configuration::updateValue('AS_GROUP_BY_COLOR', ApisearchDefaults::AS_GROUP_BY_COLOR);
+        Configuration::updateValue('AS_IMAGE_FORMAT', ApisearchDefaults::AS_DEFAULT_IMAGE_TYPE);
 
         return parent::install() &&
             $this->registerHook('header') &&
@@ -92,6 +94,7 @@ class Apisearch extends Module
         Configuration::deleteByName('AS_INDEX_IMAGES_PER_COLOR');
         Configuration::deleteByName('AS_SHOW_PRICES_WITH_TAX');
         Configuration::deleteByName('AS_GROUP_BY_COLOR');
+        Configuration::deleteByName('AS_IMAGE_FORMAT');
 
         return parent::uninstall();
     }
@@ -367,6 +370,23 @@ class Apisearch extends Module
                         )
                     ),
                 ),
+                array(
+                    'col' => 3,
+                    'type' => 'select',
+                    'label' => $this->l('image_format'),
+                    'name' => 'AS_IMAGE_FORMAT',
+                    'desc' => $this->l('image_format_help'),
+                    'options' => array(
+                        'query' => array_map(function ($type) {
+                            return array(
+                                'id' => $type,
+                                'name' => $type,
+                            );
+                        }, ApisearchImage::getImageTypes()),
+                        'id' => 'id',
+                        'name' => 'name',
+                    ),
+                ),
             ),
             'buttons' => array(
                 array(
@@ -405,6 +425,7 @@ class Apisearch extends Module
             'AS_INDEX_IMAGES_PER_COLOR' => Configuration::get('AS_INDEX_IMAGES_PER_COLOR'),
             'AS_SHOW_PRICES_WITHOUT_TAX' => Configuration::get('AS_SHOW_PRICES_WITHOUT_TAX'),
             'AS_GROUP_BY_COLOR' => Configuration::get('AS_GROUP_BY_COLOR'),
+            'AS_IMAGE_FORMAT' => ApisearchImage::getCurrentImageType(),
         );
         foreach ($this->context->controller->getLanguages() as $language) {
             $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);
