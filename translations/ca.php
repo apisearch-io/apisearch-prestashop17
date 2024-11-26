@@ -22,6 +22,8 @@ $_MODULE['<{apisearch}prestashop>apisearch_4c2794db0c12899301ea956b99287a72'] = 
 $_MODULE['<{apisearch}prestashop>apisearch_95177dc14299e2e57f993023ba664d6d'] = 'Excluir l\'IVA als preus del cercador. Aquest valor es pot sobreescriure a la URL del feed afegint valor al paràmetre vat';
 $_MODULE['<{apisearch}prestashop>apisearch_60685f06115c0e958eecdaf859b21865'] = 'Agrupar variants per color';
 $_MODULE['<{apisearch}prestashop>apisearch_d42f1aac66ee5795ab8e9c52aa1cf910'] = 'Cada grup de variants amb el mateix color seran agrupats en un producte. L\'imatge que s\'escollirà per a cada un dels grups serà l\'imatge de la primera variant del mateix. Asseguri\'s que totes les variants amb el mateix color tenen la mateixa imatge';
+$_MODULE['<{apisearch}prestashop>apisearch_460c2634eaaab84607728765982c055a'] = 'Tipus d\'imatge';
+$_MODULE['<{apisearch}prestashop>apisearch_14de2d5b683041953b07bc51ef2f09e5'] = 'Per defecte, la imatge del tipus home_default s\'utilitzarà. Canvia aquest valor si desitges carregar un altre tipus d\'imatge. Només seleccionables els tipus d\'imatges assignades a productes';
 
 $_MODULE['<{apisearch}prestashop>apisearch_a6105c0a611b41b08f1209506350279e'] = 'Si';
 $_MODULE['<{apisearch}prestashop>apisearch_7fa3b767c460b54a2be4d49030b349c7'] = 'No';

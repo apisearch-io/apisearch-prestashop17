@@ -12,9 +12,18 @@ class ApisearchImage
             WHERE products = 1
         ');
 
-        return array_values(array_filter(array_unique(array_map(function ($type) {
+        $values = array_values(array_filter(array_unique(array_map(function ($type) {
             return $type['name'];
         }, $imageTypes))));
+
+        if (in_array('home_default', $values)) {
+            $values = array_flip($values);
+            unset($values['home_default']);
+            $values = array_flip($values);
+            array_unshift($values, 'home_default');
+        }
+
+        return $values;
     }
 
     public static function getCurrentImageType()

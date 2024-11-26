@@ -22,6 +22,8 @@ $_MODULE['<{apisearch}prestashop>apisearch_4c2794db0c12899301ea956b99287a72'] = 
 $_MODULE['<{apisearch}prestashop>apisearch_95177dc14299e2e57f993023ba664d6d'] = 'Exclude the VAT from all prices shown inside the search box. You can overwrite this valur by using the feed query parameter vat';
 $_MODULE['<{apisearch}prestashop>apisearch_60685f06115c0e958eecdaf859b21865'] = 'Group variants by color';
 $_MODULE['<{apisearch}prestashop>apisearch_d42f1aac66ee5795ab8e9c52aa1cf910'] = 'Each group of variants with the same color will be grouped into a product. The image chosen for each group will be the image of the first variant in the group. Make sure that all variants with the same color have the same image';
+$_MODULE['<{apisearch}prestashop>apisearch_460c2634eaaab84607728765982c055a'] = 'Image type';
+$_MODULE['<{apisearch}prestashop>apisearch_14de2d5b683041953b07bc51ef2f09e5'] = 'By default, the home_default image type will be used. Change this value if you want to load another image type. Only selectable image types assigned to products';
 
 $_MODULE['<{apisearch}prestashop>apisearch_a6105c0a611b41b08f1209506350279e'] = 'Yes';
 $_MODULE['<{apisearch}prestashop>apisearch_7fa3b767c460b54a2be4d49030b349c7'] = 'No';
