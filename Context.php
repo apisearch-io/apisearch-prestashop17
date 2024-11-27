@@ -61,8 +61,7 @@ class Context
         }
 
         if (!$currencyId) {
-            $context = \Context::getContext();
-            $currencyId = $context->currency->id;
+            $currencyId = \Configuration::get('PS_CURRENCY_DEFAULT');
         }
 
         return new \Currency($currencyId);
