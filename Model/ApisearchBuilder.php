@@ -69,7 +69,7 @@ class ApisearchBuilder
         }
 
         $items = array_filter($items);
-        $normalizedItems = [];
+        $normalizedItems = array();
         foreach ($items as $item) {
             if (isset($item['uuid'])) {
                 $normalizedItems[] = $item;
@@ -126,9 +126,9 @@ class ApisearchBuilder
         $img = $product['id_image'];
         $idProductAttribute = null;
         $categoriesName = array();
-        $categoriesDepth0 = [];
-        $categoriesDepth1 = [];
-        $categoriesDepth2 = [];
+        $categoriesDepth0 = array();
+        $categoriesDepth1 = array();
+        $categoriesDepth2 = array();
 
         foreach ($product['categories_id'] as $categoryId) {
             if ($categoryId == \Configuration::get('PS_ROOT_CATEGORY') || $categoryId == \Configuration::get('PS_HOME_CATEGORY')) {
@@ -160,7 +160,7 @@ class ApisearchBuilder
         }
 
         $attributes = array();
-        $colors = [];
+        $colors = array();
 
         $combinationImg = null;
         $available = false;
@@ -306,14 +306,19 @@ class ApisearchBuilder
         $priceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, true);
         $price = $priceGroup[0];
         $priceWithCurrency = $priceGroup[1];
+        $priceNoRound = $priceGroup[2];
 
         $oldPriceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, false);
         $oldPrice = $oldPriceGroup[0];
         $oldPriceWithCurrency = $oldPriceGroup[1];
+        $oldPriceNoRound = $oldPriceGroup[2];
+
+        $discountPercentage = $this->getDiscount($priceNoRound, $oldPriceNoRound);
+        $withDiscount = $discountPercentage !== null;
 
         $frontFeatures = $product['front_features'] ?? null;
-        $frontFeaturesKeyFixed = [];
-        $frontFeaturesValues = [];
+        $frontFeaturesKeyFixed = array();
+        $frontFeaturesValues = array();
         if (is_array($frontFeatures)) {
             foreach ($frontFeatures as $key => $value) {
                 $frontFeaturesKeyFixed[strtolower(str_replace([' '], ['_'], $key))] = $value;
@@ -344,8 +349,8 @@ class ApisearchBuilder
             /**
              * Groups
              */
-            $users = [];
-            $keys = [];
+            $users = array();
+            $keys = array();
             $groups = \Group::getGroups($context->getLanguageId(), $context->getShopId());
             foreach ($groups as $group) {
                 $keys[$group['id_group']] = ['id_group' => $group['id_group'], 'id_customer' => null, 'with_tax' => $group['price_display_method']];
@@ -372,10 +377,12 @@ class ApisearchBuilder
                 $groupPriceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, true, $groupData['id_group'], $groupData['id_customer'], $groupData['with_tax'] == '0');
                 $groupPrice = $groupPriceGroup[0];
                 $groupPriceWithCurrency = $groupPriceGroup[1];
+                $groupPriceNoRound = $groupPriceGroup[2];
 
                 $groupOldPriceGroup = $this->getProductPrices($context, $productId, $idProductAttribute, false, $groupData['id_group'], $groupData['id_customer'], $groupData['with_tax'] == '0');
                 $groupOldPrice = $groupOldPriceGroup[0];
                 $groupOldPriceWithCurrency = $groupOldPriceGroup[1];
+                $groupOldPriceNoRound = $groupOldPriceGroup[2];
 
                 if (
                     $price == $groupPrice &&
@@ -384,12 +391,19 @@ class ApisearchBuilder
                     continue;
                 }
 
+                $groupDiscountPercentage = $this->getDiscount($groupPriceNoRound, $groupOldPriceNoRound);
+                $groupWithDiscount = $groupDiscountPercentage !== null;
+
                 $users[$key] = [
                     'p' => $groupPrice,
                     'pc' => $groupPriceWithCurrency,
-                    'op' => $groupOldPrice,
-                    'opc' => $groupOldPriceWithCurrency,
                 ];
+
+                if ($groupWithDiscount) {
+                    $users[$key]['op'] = $groupOldPrice;
+                    $users[$key]['opc'] = $groupOldPriceWithCurrency;
+                    $users[$key]['d'] = $groupDiscountPercentage;
+                }
             }
         }
 
@@ -421,7 +435,8 @@ class ApisearchBuilder
                 'category_level_1' => $categoriesDepth1,
                 'category_level_2' => $categoriesDepth2,
                 'available' => $available,
-                'with_discount' => $oldPrice - $price > 0,
+                'with_discount' => $withDiscount,
+                'discount_percentage' => $discountPercentage,
                 'with_variants' => $hasCombinations,
                 'reference' => $references,
                 'ean' => $eans,
@@ -440,7 +455,7 @@ class ApisearchBuilder
             'exact_matching_metadata' => array_values(array_filter(array_unique(array_merge(
                 array($productId),
                 $references, $eans, $upcs, $mpns,
-                $supplierReferences ?? []
+                $supplierReferences ?? array()
             ))))
         );
 
@@ -591,9 +606,26 @@ class ApisearchBuilder
             $resolvedWithTax, 6, false, $reduction, false, $specPrice, true, $userId
         );
         $price = \Tools::convertPrice($price, $context->getCurrency());
-        $price = \round($price, 2);
-        $priceWithCurrency = \Tools::displayPrice($price, $context->getCurrency());
+        $priceRounder = \round($price, 2);
+        $priceWithCurrency = \Tools::displayPrice($priceRounder, $context->getCurrency());
 
-        return [$price, $priceWithCurrency];
+        return array($priceRounder, $priceWithCurrency, $price);
+    }
+
+    /**
+     * @param $price
+     * @param $oldPrice
+     * @return float|null
+     */
+    private function getDiscount($price, $oldPrice)
+    {
+        $withDiscount = ($oldPrice - $price) > 0;
+        $discountPercentage = null;
+        if ($withDiscount) {
+            $discountPercentage = 100 - (100 * $price) / $oldPrice;
+            $discountPercentage = round($discountPercentage);
+        }
+
+        return $discountPercentage;
     }
 }
