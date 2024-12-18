@@ -47,6 +47,7 @@ class ApisearchProduct
         $prefix = _DB_PREFIX_;
         $productIdsAsString = implode(',', $productsId);
         $langId = $context->getLanguageId();
+        $orderBy = ApisearchOrderBy::getCurrentOrderByValue();
 
         $sql = "
             SELECT
@@ -66,7 +67,9 @@ class ApisearchProduct
                 LEFT JOIN {$prefix}stock_available st ON (st.id_product = p.id_product)
                 " . ($context->isLoadSuppliers() ? "LEFT JOIN {$prefix}product_supplier psup ON (psup.id_product = psup.id_product)" : "") . "
             WHERE p.id_product IN($productIdsAsString)
-            GROUP BY p.id_product;
+            GROUP BY p.id_product
+            $orderBy
+            ;
         ";
 
         $products = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);

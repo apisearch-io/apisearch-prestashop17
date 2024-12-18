@@ -30,6 +30,7 @@ if (!defined('_PS_VERSION_')) {
 
 use Apisearch\Model\ApisearchDefaults;
 use Apisearch\Model\ApisearchImage;
+use Apisearch\Model\ApisearchOrderBy;
 
 require_once __DIR__.'/vendor/autoload.php';
 
@@ -68,6 +69,7 @@ class Apisearch extends Module
         Configuration::updateValue('AS_SHOW_PRICES_WITHOUT_TAX', ApisearchDefaults::AS_SHOW_PRICES_WITHOUT_TAX);
         Configuration::updateValue('AS_GROUP_BY_COLOR', ApisearchDefaults::AS_GROUP_BY_COLOR);
         Configuration::updateValue('AS_IMAGE_FORMAT', ApisearchDefaults::AS_DEFAULT_IMAGE_TYPE);
+        Configuration::updateValue('AS_ORDER_BY', ApisearchDefaults::AS_DEFAULT_ORDER_BY);
 
         return parent::install() &&
             $this->registerHook('header') &&
@@ -94,6 +96,7 @@ class Apisearch extends Module
         Configuration::deleteByName('AS_SHOW_PRICES_WITH_TAX');
         Configuration::deleteByName('AS_GROUP_BY_COLOR');
         Configuration::deleteByName('AS_IMAGE_FORMAT');
+        Configuration::deleteByName('AS_ORDER_BY');
 
         return parent::uninstall();
     }
@@ -386,6 +389,23 @@ class Apisearch extends Module
                         'name' => 'name',
                     ),
                 ),
+                array(
+                    'col' => 3,
+                    'type' => 'select',
+                    'label' => $this->l('order_by'),
+                    'name' => 'AS_ORDER_BY',
+                    'desc' => $this->l('order_by_help'),
+                    'options' => array(
+                        'query' => array_map(function ($type) {
+                            return array(
+                                'id' => $type,
+                                'name' => $this->l('order_by_' . $type),
+                            );
+                        }, array_keys(ApisearchOrderBy::ORDER_BY)),
+                        'id' => 'id',
+                        'name' => 'name',
+                    ),
+                ),
             ),
             'buttons' => array(
                 array(
@@ -424,6 +444,7 @@ class Apisearch extends Module
             'AS_SHOW_PRICES_WITHOUT_TAX' => Configuration::get('AS_SHOW_PRICES_WITHOUT_TAX'),
             'AS_GROUP_BY_COLOR' => Configuration::get('AS_GROUP_BY_COLOR'),
             'AS_IMAGE_FORMAT' => ApisearchImage::getCurrentImageType(),
+            'AS_ORDER_BY' => ApisearchOrderBy::getCurrentOrderBy(),
         );
         foreach ($this->context->controller->getLanguages() as $language) {
             $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);

@@ -24,6 +24,13 @@ $_MODULE['<{apisearch}prestashop>apisearch_60685f06115c0e958eecdaf859b21865'] = 
 $_MODULE['<{apisearch}prestashop>apisearch_d42f1aac66ee5795ab8e9c52aa1cf910'] = 'Each group of variants with the same color will be grouped into a product. The image chosen for each group will be the image of the first variant in the group. Make sure that all variants with the same color have the same image';
 $_MODULE['<{apisearch}prestashop>apisearch_460c2634eaaab84607728765982c055a'] = 'Image type';
 $_MODULE['<{apisearch}prestashop>apisearch_14de2d5b683041953b07bc51ef2f09e5'] = 'By default, the home_default image type will be used. Change this value if you want to load another image type. Only selectable image types assigned to products';
+$_MODULE['<{apisearch}prestashop>apisearch_da3ad3b4322b19b609e4fa9d0a98a97b'] = 'Sort products';
+$_MODULE['<{apisearch}prestashop>apisearch_a84a585e060373cbe0329749c5653c77'] = 'Default product order in the search engine. Without applying any specific order, products will be sent to Apisearch ordered according to configuration. Additionally, ultimately, when two products have the same score, this order will also be applied.';
+$_MODULE['<{apisearch}prestashop>apisearch_639f40c2a6a9dbeddc9114253f1ac580'] = 'From oldest to newest';
+$_MODULE['<{apisearch}prestashop>apisearch_637c7cf48a31ea9cdc9496be9373da44'] = 'From newest to oldest';
+$_MODULE['<{apisearch}prestashop>apisearch_890a44bb38e82f7bfa0458465d1bb44f'] = 'By stock';
+$_MODULE['<{apisearch}prestashop>apisearch_85c2dc7948fc1ae27a9254d86167589a'] = 'By total number of sales';
+$_MODULE['<{apisearch}prestashop>apisearch_da5b0d4e44328191769f083a2fde3bdb'] = 'Recently updated first';
 
 $_MODULE['<{apisearch}prestashop>apisearch_a6105c0a611b41b08f1209506350279e'] = 'Yes';
 $_MODULE['<{apisearch}prestashop>apisearch_7fa3b767c460b54a2be4d49030b349c7'] = 'No';

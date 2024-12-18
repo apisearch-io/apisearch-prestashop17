@@ -24,6 +24,13 @@ $_MODULE['<{apisearch}prestashop>apisearch_60685f06115c0e958eecdaf859b21865'] = 
 $_MODULE['<{apisearch}prestashop>apisearch_d42f1aac66ee5795ab8e9c52aa1cf910'] = 'Cada grup de variants amb el mateix color seran agrupats en un producte. L\'imatge que s\'escollirà per a cada un dels grups serà l\'imatge de la primera variant del mateix. Asseguri\'s que totes les variants amb el mateix color tenen la mateixa imatge';
 $_MODULE['<{apisearch}prestashop>apisearch_460c2634eaaab84607728765982c055a'] = 'Tipus d\'imatge';
 $_MODULE['<{apisearch}prestashop>apisearch_14de2d5b683041953b07bc51ef2f09e5'] = 'Per defecte, la imatge del tipus home_default s\'utilitzarà. Canvia aquest valor si desitges carregar un altre tipus d\'imatge. Només seleccionables els tipus d\'imatges assignades a productes';
+$_MODULE['<{apisearch}prestashop>apisearch_da3ad3b4322b19b609e4fa9d0a98a97b'] = 'Ordenar productes';
+$_MODULE['<{apisearch}prestashop>apisearch_a84a585e060373cbe0329749c5653c77'] = 'Ordre per defecte dels productes al cercador. Sense aplicar cap ordre específic, els productes s’enviaran a Apisearch ordenats segons configuració. A més, en última instància, quan dos productes tinguin la mateixa puntuació, aquest ordre també s’aplicarà.';
+$_MODULE['<{apisearch}prestashop>apisearch_639f40c2a6a9dbeddc9114253f1ac580'] = 'De més antic a més nou';
+$_MODULE['<{apisearch}prestashop>apisearch_637c7cf48a31ea9cdc9496be9373da44'] = 'De més nou a més antic';
+$_MODULE['<{apisearch}prestashop>apisearch_890a44bb38e82f7bfa0458465d1bb44f'] = 'Per estoc';
+$_MODULE['<{apisearch}prestashop>apisearch_85c2dc7948fc1ae27a9254d86167589a'] = 'Per nombre total de vendes';
+$_MODULE['<{apisearch}prestashop>apisearch_da5b0d4e44328191769f083a2fde3bdb'] = 'Primer els actualitzats recentment';
 
 $_MODULE['<{apisearch}prestashop>apisearch_a6105c0a611b41b08f1209506350279e'] = 'Si';
 $_MODULE['<{apisearch}prestashop>apisearch_7fa3b767c460b54a2be4d49030b349c7'] = 'No';
