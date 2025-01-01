@@ -5,7 +5,7 @@ namespace Apisearch\Model;
 class ApisearchOrderBy
 {
     const ORDER_BY = [
-        'id_asc' => '',
+        'id_asc' => 'ORDER BY p.id_product ASC',
         'id_desc' => 'ORDER BY p.id_product DESC',
         'stock' => 'ORDER BY st.quantity DESC, p.id_product DESC',
         'sales' => 'ORDER BY sales DESC, p.id_product DESC',

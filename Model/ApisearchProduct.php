@@ -18,6 +18,8 @@ class ApisearchProduct
     )
     {
         $prefix = _DB_PREFIX_;
+        $orderBy = ApisearchOrderBy::getCurrentOrderByValue();
+
         $sql = "
             SELECT DISTINCT(p.id_product)
             FROM {$prefix}product p
@@ -27,7 +29,7 @@ class ApisearchProduct
                 pl.`id_lang` = {$context->getLanguageId()} AND
                 ps.`visibility` IN ('both', 'search') AND
                 ps.`active` = 1
-            ORDER BY id_product ASC
+            $orderBy
             LIMIT $start,$limit";
 
         return \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
