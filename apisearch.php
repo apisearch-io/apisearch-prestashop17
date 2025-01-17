@@ -70,6 +70,7 @@ class Apisearch extends Module
         Configuration::updateValue('AS_GROUP_BY_COLOR', ApisearchDefaults::AS_GROUP_BY_COLOR);
         Configuration::updateValue('AS_IMAGE_FORMAT', ApisearchDefaults::AS_DEFAULT_IMAGE_TYPE);
         Configuration::updateValue('AS_ORDER_BY', ApisearchDefaults::AS_DEFAULT_ORDER_BY);
+        Configuration::updateValue('AS_REAL_TIME_PRICES', ApisearchDefaults::AS_REAL_TIME_PRICES);
 
         return parent::install() &&
             $this->registerHook('header') &&
@@ -97,6 +98,7 @@ class Apisearch extends Module
         Configuration::deleteByName('AS_GROUP_BY_COLOR');
         Configuration::deleteByName('AS_IMAGE_FORMAT');
         Configuration::deleteByName('AS_ORDER_BY');
+        Configuration::deleteByName('AS_REAL_TIME_PRICES');
 
         return parent::uninstall();
     }
@@ -406,6 +408,26 @@ class Apisearch extends Module
                         'name' => 'name',
                     ),
                 ),
+                array(
+                    'col' => 3,
+                    'type' => 'switch',
+                    'label' => $this->l('real_time_prices'),
+                    'name' => 'AS_REAL_TIME_PRICES',
+                    'desc' => $this->l('real_time_prices_help'),
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => $this->l('yes')
+                        ),
+                        array(
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => $this->l('no')
+                        )
+                    ),
+                ),
             ),
             'buttons' => array(
                 array(
@@ -445,6 +467,7 @@ class Apisearch extends Module
             'AS_GROUP_BY_COLOR' => Configuration::get('AS_GROUP_BY_COLOR'),
             'AS_IMAGE_FORMAT' => ApisearchImage::getCurrentImageType(),
             'AS_ORDER_BY' => ApisearchOrderBy::getCurrentOrderBy(),
+            'AS_REAL_TIME_PRICES' => Configuration::get('AS_REAL_TIME_PRICES'),
         );
         foreach ($this->context->controller->getLanguages() as $language) {
             $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);
@@ -518,6 +541,8 @@ class Apisearch extends Module
                 ? $currentIdGroup
                 : null,
             'customer_id' => $currentIdCustomer,
+            'base_url' => Context::getContext()->shop->getBaseURL(true),
+            'real_time_prices' => Configuration::get('AS_REAL_TIME_PRICES') === "1",
         ));
 
         return $this->display(__FILE__, 'views/templates/front/search.tpl');

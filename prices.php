@@ -24,7 +24,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-use Apisearch\Model\ApisearchDefaults;
+use Apisearch\Model\Product\ProductPrices;
+use Apisearch\Context;
+
+set_time_limit(1800);
 
 /**
  * We suppress all possible incoming output data to avoid malformed feed
@@ -35,9 +38,42 @@ require_once(dirname(__FILE__) . '../../../config/config.inc.php');
 require_once(dirname(__FILE__) . '../../../init.php');
 require_once __DIR__.'/vendor/autoload.php';
 
-header('Access-Control-Allow-Origin: *');
-http_response_code(204);
+function pricesFromProductsId(
+    Context $context,
+    array $productsId
+)
+{
+    $prices = [];
+    foreach ($productsId as $productId) {
+        $priceGroup = ProductPrices::getProductPrices($context, $productId, null, true);
+        $price = $priceGroup[0];
+        $priceWithCurrency = $priceGroup[1];
+        $priceNoRound = $priceGroup[2];
 
-echo json_encode([
-    'version' => ApisearchDefaults::PLUGIN_VERSION,
-]);
+        $oldPriceGroup = ProductPrices::getProductPrices($context, $productId, null, false);
+        $oldPrice = $oldPriceGroup[0];
+        $oldPriceWithCurrency = $oldPriceGroup[1];
+        $oldPriceNoRound = $oldPriceGroup[2];
+
+        $discountPercentage = ProductPrices::getDiscount($priceNoRound, $oldPriceNoRound);
+        $withDiscount = $discountPercentage !== null;
+
+        $prices[$productId] = [
+            'p' => $price,
+            'p_c' => $priceWithCurrency,
+            'op' => $oldPrice,
+            'op_c' => $oldPriceWithCurrency,
+            'wd' => $withDiscount,
+            'dp' => $discountPercentage
+        ];
+    }
+
+    return $prices;
+}
+
+$ids = \Tools::getValue('ids', '');
+$ids = explode(',', $ids);
+$context = Context::fromCurrentPrestashopContext();
+$prices = pricesFromProductsId($context, $ids);
+
+echo json_encode($prices);

@@ -31,6 +31,8 @@ $_MODULE['<{apisearch}prestashop>apisearch_637c7cf48a31ea9cdc9496be9373da44'] = 
 $_MODULE['<{apisearch}prestashop>apisearch_890a44bb38e82f7bfa0458465d1bb44f'] = 'By stock';
 $_MODULE['<{apisearch}prestashop>apisearch_85c2dc7948fc1ae27a9254d86167589a'] = 'By total number of sales';
 $_MODULE['<{apisearch}prestashop>apisearch_da5b0d4e44328191769f083a2fde3bdb'] = 'Recently updated first';
+$_MODULE['<{apisearch}prestashop>apisearch_5f853e04d442c97ef1e10e03e9c377bc'] = 'Enable real-time pricing';
+$_MODULE['<{apisearch}prestashop>apisearch_188c0026d43a98849b74ab9619037c05'] = 'For each product displayed in the search engine, Apisearch will dynamically calculate the prices based on the user. This process requires using your Prestashop in real-time, which will directly affect search performance.';
 
 $_MODULE['<{apisearch}prestashop>apisearch_a6105c0a611b41b08f1209506350279e'] = 'Yes';
 $_MODULE['<{apisearch}prestashop>apisearch_7fa3b767c460b54a2be4d49030b349c7'] = 'No';
