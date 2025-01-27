@@ -71,8 +71,17 @@ function pricesFromProductsId(
     return $prices;
 }
 
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET");
+header("Content-Type: application/json; charset=UTF-8");
+
 $ids = \Tools::getValue('ids', '');
 $ids = explode(',', $ids);
+$ids = array_filter($ids);
+if (empty($ids)) {
+    return json_encode([]);
+}
+
 $context = Context::fromCurrentPrestashopContext();
 $prices = pricesFromProductsId($context, $ids);
 

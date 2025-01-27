@@ -11,7 +11,6 @@
 {if $real_time_prices}
 <script>
 	window.apisearchItemsTransformation = async (items) => {
-		console.log(items);
 		const ids = items.map((item) => item.uuid.id).join(",");
 		const url = "{$base_url}modules/apisearch/prices.php?ids=" + ids;
 		const response = await fetch(url);
