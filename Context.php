@@ -72,11 +72,19 @@ class Context
         $context->loadSales = false;
         $context->loadSuppliers = false;
 
-        $addressId = \Address::getFirstCustomerAddressId($prestashopContext->customer->id);
-        if ($addressId) {
-            $address = new \Address($addressId);
+        $cart = $prestashopContext->cart;
+        if (
+            !is_null($cart->id_address_delivery) &&
+            $cart->id_address_delivery > 0
+        ) {
+            $address = new \Address($cart->id_address_delivery);
         } else {
-            $address = \Address::initialize();
+            $addressId = \Address::getFirstCustomerAddressId($prestashopContext->customer->id);
+            if ($addressId) {
+                $address = new \Address($addressId);
+            } else {
+                $address = \Address::initialize();
+            }
         }
 
         $context->idCountry = $address->id_country;
