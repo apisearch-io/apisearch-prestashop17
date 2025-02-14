@@ -26,6 +26,8 @@
 
 namespace Apisearch\Model;
 
+use Apisearch\Context;
+
 class ApisearchManufacturer
 {
     private static $manufacturers = array();
@@ -34,7 +36,10 @@ class ApisearchManufacturer
      * @param $manufacturersId
      * @return array
      */
-    public static function getManufacturers($manufacturersId)
+    public static function getManufacturers(
+        $manufacturersId,
+        Context $context
+    )
     {
         if (empty($manufacturersId)) {
             return [];
@@ -42,6 +47,7 @@ class ApisearchManufacturer
 
         $missingManufacturersId = [];
         $alreadyLoadedManufacturers = [];
+        $manufacturersId = array_filter($manufacturersId);
         $manufacturersId = array_unique($manufacturersId);
 
         foreach ($manufacturersId as $manufacturerId) {
@@ -62,6 +68,15 @@ class ApisearchManufacturer
         $sql = "SELECT `name`, active, id_manufacturer
             FROM `{$prefix}manufacturer`
             WHERE `id_manufacturer` in ($missingManufacturersIdAsString)";
+
+        if ($context->isDebug()) {
+            echo json_encode([
+                'debug' => 'sql manufacturers',
+                'sql' => $sql,
+            ]);
+            echo PHP_EOL;
+            ob_flush();
+        }
 
         $manufacturers = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
         foreach ($manufacturers as $manufacturer) {

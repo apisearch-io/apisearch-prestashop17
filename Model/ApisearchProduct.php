@@ -100,7 +100,7 @@ class ApisearchProduct
 
         $products = \Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql, true, false);
         $productsIndexedById = [];
-        $manufacturers = ApisearchManufacturer::getManufacturers(array_column($products, 'id_manufacturer'));
+        $manufacturers = ApisearchManufacturer::getManufacturers(array_column($products, 'id_manufacturer'), $context);
         foreach ($products as $product) {
             $product['manufacturer'] = $manufacturers[$product['id_manufacturer']] ?? '';
             $product['name'] = \strip_tags($product['name'] ?? '');
