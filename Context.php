@@ -39,6 +39,7 @@ class Context
     private $idCountry;
     private $idState;
     private $zipcode;
+    private $groupId;
 
     public static function fromUrl()
     {
@@ -54,6 +55,7 @@ class Context
         $context->idCountry = \Tools::getValue('id-country', \Address::initialize()->id_country);
         $context->idState = \Tools::getValue('id-state', \Address::initialize()->id_state);
         $context->zipcode = \Tools::getValue('zipcode', \Address::initialize()->postcode);
+        $context->groupId = (int) \Configuration::get('PS_UNIDENTIFIED_GROUP');
 
         return $context;
     }
@@ -90,6 +92,7 @@ class Context
         $context->idCountry = $address->id_country;
         $context->idState = $address->id_state;
         $context->zipcode = $address->postcode;
+        $context->groupId = \Context::getContext()->customer->id_default_group;
 
         return $context;
     }
@@ -241,5 +244,13 @@ class Context
     public function getZipcode()
     {
         return $this->zipcode;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getGroupId()
+    {
+        return $this->groupId;
     }
 }

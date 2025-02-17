@@ -42,7 +42,7 @@ class ProductPrices
     public static function getProductPrices(Context $context, $productId, $idProductAttribute, $reduction, $groupId = null, $userId = null, $withTax = null)
     {
         if (!$groupId) {
-            $groupId = (int) \Configuration::get('PS_UNIDENTIFIED_GROUP');
+            $groupId = $context->getGroupId();
         }
 
         $resolvedWithTax = $context->isWithTax();
