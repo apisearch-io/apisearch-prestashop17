@@ -79,7 +79,8 @@ $ids = \Tools::getValue('ids', '');
 $ids = explode(',', $ids);
 $ids = array_filter($ids);
 if (empty($ids)) {
-    return json_encode([]);
+    echo "[]";
+    die();
 }
 
 $context = Context::fromCurrentPrestashopContext();
