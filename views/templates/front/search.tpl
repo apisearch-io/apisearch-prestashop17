@@ -10,14 +10,22 @@
 
 {if $real_time_prices}
 <script>
+	let apisearchFetchController;
 	window.apisearchItemsTransformation = async (items) => {
+		if (apisearchFetchController) {
+			apisearchFetchController.abort();
+		}
+
 		if (items.length === 0) {
 			return items;
 		}
 
+		apisearchFetchController = new AbortController();
+		const apisearchFetchSignal = apisearchFetchController.signal;
+
 		const ids = items.map((item) => item.uuid.id).join(",");
 		const url = "{$base_url}modules/apisearch/prices.php?ids=" + ids;
-		const response = await fetch(url);
+		const response = await fetch(url, { signal: apisearchFetchSignal });
 		const prices = await response.json();
 
 		return items.map((item) => {
