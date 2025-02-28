@@ -69,7 +69,16 @@ class Context
         $context->debug = false;
         $context->onlyPSProducts = false;
         $context->shopId = \Context::getContext()->shop->id;
-        $context->withTax = (new \Group(\Context::getContext()->customer->id_default_group))->price_display_method == "0";
+        $context->groupId = \Context::getContext()->customer->id_default_group;
+
+        // Special scenario
+        // Check if the group is included in the groups that, even if is defined that the price should be calculated
+        // with tax, should be shown without tax.
+        $groupsToShowPricesWithoutTax = explode(',', \Configuration::get('AS_GROUPS_SHOW_NO_TAX'));
+        $context->withTax = in_array($context->groupId, $groupsToShowPricesWithoutTax)
+            ? false
+            : (new \Group($context->groupId))->price_display_method == "0";
+
         $context->currency = $prestashopContext->currency;
         $context->loadSales = false;
         $context->loadSuppliers = false;
@@ -92,7 +101,6 @@ class Context
         $context->idCountry = $address->id_country;
         $context->idState = $address->id_state;
         $context->zipcode = $address->postcode;
-        $context->groupId = \Context::getContext()->customer->id_default_group;
 
         return $context;
     }

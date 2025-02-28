@@ -33,6 +33,8 @@ $_MODULE['<{apisearch}prestashop>apisearch_85c2dc7948fc1ae27a9254d86167589a'] = 
 $_MODULE['<{apisearch}prestashop>apisearch_da5b0d4e44328191769f083a2fde3bdb'] = 'Primer els actualitzats recentment';
 $_MODULE['<{apisearch}prestashop>apisearch_5f853e04d442c97ef1e10e03e9c377bc'] = 'Activar preus en temps real';
 $_MODULE['<{apisearch}prestashop>apisearch_188c0026d43a98849b74ab9619037c05'] = 'Per a cada producte que es mostri al cercador, Apisearch calcularà els preus dinàmicament segons l’usuari. Aquest procés requereix utilitzar el teu Prestashop en temps real, per la qual cosa afectarà directament al rendiment de la cerca.';
+$_MODULE['<{apisearch}prestashop>apisearch_27e3b1c1c34fd90dad6f194bad153e34'] = 'Grups per mostrar els preus sense IVA';
+$_MODULE['<{apisearch}prestashop>apisearch_3274fd9ead6b6ab50b1fc5f7c87ee1bc'] = 'Independentment de si un grup està configurat amb o sense IVA, pots forçar que els usuaris d’aquest grup mostrin els preus sense IVA en el cercador. Requereix l’activació dels preus en temps real.';
 
 $_MODULE['<{apisearch}prestashop>apisearch_a6105c0a611b41b08f1209506350279e'] = 'Si';
 $_MODULE['<{apisearch}prestashop>apisearch_7fa3b767c460b54a2be4d49030b349c7'] = 'No';

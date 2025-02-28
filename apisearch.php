@@ -71,6 +71,7 @@ class Apisearch extends Module
         Configuration::updateValue('AS_IMAGE_FORMAT', ApisearchDefaults::AS_DEFAULT_IMAGE_TYPE);
         Configuration::updateValue('AS_ORDER_BY', ApisearchDefaults::AS_DEFAULT_ORDER_BY);
         Configuration::updateValue('AS_REAL_TIME_PRICES', ApisearchDefaults::AS_REAL_TIME_PRICES);
+        Configuration::updateValue('AS_GROUPS_SHOW_NO_TAX', ApisearchDefaults::AS_GROUPS_SHOW_NO_TAX);
 
         return parent::install() &&
             $this->registerHook('header') &&
@@ -99,6 +100,7 @@ class Apisearch extends Module
         Configuration::deleteByName('AS_IMAGE_FORMAT');
         Configuration::deleteByName('AS_ORDER_BY');
         Configuration::deleteByName('AS_REAL_TIME_PRICES');
+        Configuration::deleteByName('AS_GROUPS_SHOW_NO_TAX');
 
         return parent::uninstall();
     }
@@ -110,10 +112,9 @@ class Apisearch extends Module
         }
 
         $this->context->smarty->assign('module_dir', Context::getContext()->link->getBaseLink() . ltrim($this->_path, '/'));
+        $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/config_form.tpl');
 
-        $output = $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
-
-        return $output . $this->renderForm();
+        return $this->renderForm() . $output;
     }
 
     protected function renderForm()
@@ -139,7 +140,7 @@ class Apisearch extends Module
             'id_language' => $this->context->language->id,
         );
 
-        return $helper->generateForm(array($this->getConfigForm())) . '<script>document.getElementById("go-to-admin").setAttribute("target", "_blank");</script>';
+        return $helper->generateForm(array($this->getConfigForm()));
     }
 
     protected function getConfigForm()
@@ -294,6 +295,7 @@ class Apisearch extends Module
                         )
                     ),
                 ),
+                /*
                 array(
                     'col' => 3,
                     'type' => 'switch',
@@ -314,6 +316,7 @@ class Apisearch extends Module
                         )
                     ),
                 ),
+                */
                 array(
                     'col' => 3,
                     'type' => 'switch',
@@ -450,7 +453,7 @@ class Apisearch extends Module
 
     protected function getConfigFormValues()
     {
-        $form_values = array(
+        $formValues = array(
             'AS_DISPLAY_SEARCH_BAR' => Configuration::get('AS_DISPLAY_SEARCH_BAR'),
             'AS_CLUSTER_URL' => Configuration::get('AS_CLUSTER_URL'),
             'AS_ADMIN_URL' => Configuration::get('AS_ADMIN_URL'),
@@ -468,36 +471,36 @@ class Apisearch extends Module
             'AS_IMAGE_FORMAT' => ApisearchImage::getCurrentImageType(),
             'AS_ORDER_BY' => ApisearchOrderBy::getCurrentOrderBy(),
             'AS_REAL_TIME_PRICES' => Configuration::get('AS_REAL_TIME_PRICES'),
+            'AS_GROUPS_SHOW_NO_TAX[]' => explode(',', Configuration::get('AS_GROUPS_SHOW_NO_TAX')),
         );
+
         foreach ($this->context->controller->getLanguages() as $language) {
-            $form_values['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);
-            $form_values['AS_TOKEN'][$language['id_lang']] = Configuration::get('AS_TOKEN', $language['id_lang']);
+            $formValues['AS_INDEX'][$language['id_lang']] = Configuration::get('AS_INDEX', $language['id_lang']);
+            $formValues['AS_TOKEN'][$language['id_lang']] = Configuration::get('AS_TOKEN', $language['id_lang']);
         }
 
-        return $form_values;
+        return $formValues;
     }
 
     protected function postProcess()
     {
-        $form_values = $this->getConfigFormValues();
-        foreach ($form_values as $key => $value) {
-            if (is_array($value)) {
+        $formValues = $this->getConfigFormValues();
+        foreach ($formValues as $key => $value) {
+            if (is_array($value) && !in_array($key, ['AS_GROUPS_SHOW_NO_TAX[]'])) {
 
-                $post_values = array();
+                $postValues = array();
                 foreach ($this->context->controller->getLanguages() as $language) {
-                    $post_values[$language['id_lang']] = Tools::getValue($key . '_' . $language['id_lang']);
+                    $postValues[$language['id_lang']] = Tools::getValue($key . '_' . $language['id_lang']);
                 }
 
-                Configuration::updateValue($key, $post_values);
+                Configuration::updateValue($key, $postValues);
             } else {
-                if ($key == 'AS_SHOP') {
-                    $shop_post_values = array(
-                        'group' => Tools::getValue('checkBoxShopGroupAsso_module'),
-                        'shop' => Tools::getValue('checkBoxShopAsso_module')
-                    );
-                    Configuration::updateValue($key, json_encode($shop_post_values));
-                } else
-                    Configuration::updateValue($key, Tools::getValue($key));
+                $value = Tools::getValue($key);
+                if ($key === 'AS_GROUPS_SHOW_NO_TAX[]') {
+                    $key = 'AS_GROUPS_SHOW_NO_TAX';
+                    $value = implode(',', Tools::getValue('AS_GROUPS_SHOW_NO_TAX', []));
+                }
+                Configuration::updateValue($key, $value);
             }
         }
     }
