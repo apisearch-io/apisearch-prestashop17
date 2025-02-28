@@ -69,7 +69,7 @@ class Context
         $context->debug = false;
         $context->onlyPSProducts = false;
         $context->shopId = \Context::getContext()->shop->id;
-        $context->withTax = (new \Group(\Context::getContext()->customer->id_default_group))->price_display_method === "0";
+        $context->withTax = (new \Group(\Context::getContext()->customer->id_default_group))->price_display_method == "0";
         $context->currency = $prestashopContext->currency;
         $context->loadSales = false;
         $context->loadSuppliers = false;
