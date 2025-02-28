@@ -431,6 +431,25 @@ class Apisearch extends Module
                         )
                     ),
                 ),
+                array(
+                    'col' => 3,
+                    'class' => 'as_groups_show_no_tax',
+                    'type' => 'select',
+                    'label' => $this->l('groups_show_no_tax'),
+                    'name' => 'AS_GROUPS_SHOW_NO_TAX[]',
+                    'desc' => $this->l('groups_show_no_tax_help'),
+                    'multiple' => true,
+                    'options' => array(
+                        'query' => array_map(function(array $group) {
+                            return array(
+                                'id' => $group['id_group'],
+                                'name' => $group['name']
+                            );
+                        }, Group::getGroups(Context::getContext()->language->id)),
+                        'id' => 'id',
+                        'name' => 'name'
+                    )
+                )
             ),
             'buttons' => array(
                 array(
